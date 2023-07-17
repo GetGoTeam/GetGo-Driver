@@ -1,20 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { store } from "./store";
+import { Provider } from "react-redux";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+
+import "react-native-gesture-handler";
+import { NavigationContainer } from "@react-navigation/native";
+import {
+  createStackNavigator,
+  TransitionPresets,
+} from "@react-navigation/stack";
+
+import HomePage from "./src/pages/HomePage";
+import HistoryPage from "./src/pages/HistoryPage";
+import NotificationPage from "./src/pages/NotificationPage";
+import ProfilePage from "./src/pages/ProfilePage";
 
 export default function App() {
+  const Stack = createStackNavigator();
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <Provider store={store}>
+      <NavigationContainer>
+        <SafeAreaProvider>
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              ...TransitionPresets.SlideFromRightIOS,
+            }}
+          >
+            <Stack.Screen name="HomePage" component={HomePage} />
+            <Stack.Screen
+              name="NotificationPage"
+              component={NotificationPage}
+            />
+            <Stack.Screen name="HistoryPage" component={HistoryPage} />
+            <Stack.Screen name="ProfilePage" component={ProfilePage} />
+          </Stack.Navigator>
+        </SafeAreaProvider>
+      </NavigationContainer>
+    </Provider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

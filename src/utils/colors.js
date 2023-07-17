@@ -5,7 +5,7 @@ export const colors = {
   primary_300: "#FF9494",
 };
 
-export const text = {
+export const text_col = {
   color_900: "#111111",
   color_800: "#262626",
   color_700: "#434343",
