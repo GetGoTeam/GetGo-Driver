@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   container_content_title: {
     fontSize: 14,
     fontWeight: 400,
-    Color: text_col.color_600,
+    color: text_col.color_600,
   },
   container_content_title_money: {
     display: "flex",
