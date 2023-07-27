@@ -13,6 +13,7 @@ import HomePage from "./src/pages/HomePage";
 import HistoryPage from "./src/pages/HistoryPage";
 import NotificationPage from "./src/pages/NotificationPage";
 import ProfilePage from "./src/pages/ProfilePage";
+import OrderPage2 from "./src/pages/OrderPage2";
 
 export default function App() {
   const Stack = createStackNavigator();
@@ -34,6 +35,7 @@ export default function App() {
             />
             <Stack.Screen name="HistoryPage" component={HistoryPage} />
             <Stack.Screen name="ProfilePage" component={ProfilePage} />
+            <Stack.Screen name="OrderPage2" component={OrderPage2} />
           </Stack.Navigator>
         </SafeAreaProvider>
       </NavigationContainer>

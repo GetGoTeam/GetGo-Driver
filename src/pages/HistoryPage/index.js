@@ -7,7 +7,7 @@ import GoogleMap from "../../components/GoogleMap";
 const HistoryPage = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      {/* <GoogleApiSearch /> */}
+      <GoogleApiSearch />
       {/* <View style={styles.content}>
         <Text>lich su</Text>
       </View> */}

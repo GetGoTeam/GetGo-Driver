@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   },
   navbar: {
     alignItems: "center",
-    height: 55,
+    height: 60,
   },
   heading: {
     flex: 0,
