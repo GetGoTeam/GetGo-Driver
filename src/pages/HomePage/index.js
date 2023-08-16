@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState, useEffect } from "react";
 import {
   SafeAreaView,
   Text,
@@ -16,14 +16,88 @@ import {
   faStar,
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import NavBase from "../../components/NavBase/index";
 import IncomeItem from "./IncomeItem";
+import NavBase from "~components/NavBase/index";
 import GoogleMap from "../../components/GoogleMap";
 import { colors, text_col } from "../../utils/colors";
+import * as Location from "expo-location";
+import { useDispatch } from "react-redux";
+import { setOrigin, setDestination } from "../../../slices/navSlice";
+import { GOOGLE_MAPS_APIKEY } from "@env";
+import axios from "axios";
 
 const HomePage = () => {
-  const [openIncome, setOpenIncome] = React.useState(false);
-  const [offline, setOffline] = React.useState(false);
+  const [openIncome, setOpenIncome] = useState(false);
+  const [offline, setOffline] = useState(true);
+
+  const [latitudePicked, setLatitudePicked] = useState(0);
+  const [longitudePicked, setLongitudePicked] = useState(0);
+
+  const [loading, setLoading] = useState(true);
+
+  const dispatch = useDispatch();
+
+  const getPlaceFromCoordinates = async (latitude, longitude) => {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_APIKEY}`;
+
+    try {
+      const response = await axios.get(url);
+      if (response.data.results.length > 0) {
+        return response.data.results[0].formatted_address;
+      } else {
+        // console.log(response.data.error_message);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error getting place from coordinates:", error);
+      return "Error";
+    }
+  };
+
+  const getLocationCurrent = async () => {
+    try {
+      // Kiểm tra quyền truy cập vị trí
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (!status.includes("granted")) {
+        console.warn(
+          "Quyền truy cập vị trí không được cấp, vui lòng kiểm tra lại."
+        );
+        return;
+      }
+
+      // Lấy vị trí hiện tại
+      const location = await Location.getCurrentPositionAsync({});
+
+      // Gán giá trị vị trí hiện tại
+      setLatitudePicked(location.coords.latitude);
+      setLongitudePicked(location.coords.longitude);
+
+      // console.log(location.coords.latitude);
+
+      // Chuyển đổi vị trí hiện tại thành địa chỉ
+      const address = await getPlaceFromCoordinates(
+        location.coords.latitude,
+        location.coords.longitude
+      );
+    } catch (error) {
+      console.error("Lỗi khi lấy vị trí:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getLocationCurrent();
+  }, []);
+
+  useEffect(() => {
+    dispatch(
+      setOrigin({ latitude: latitudePicked, longitude: longitudePicked })
+    );
+    // dispatch(
+    //   setDestination({ latitude: latitudePicked, longitude: longitudePicked })
+    // );
+  }, [latitudePicked, longitudePicked]);
 
   return (
     <SafeAreaView style={{ flex: 1, position: "relative" }}>
@@ -99,7 +173,10 @@ const HomePage = () => {
         </View>
       </View>
       <View style={styles.google_map}>
-        <GoogleMap />
+        <GoogleMap
+          latitudePicked={latitudePicked}
+          longitudePicked={longitudePicked}
+        />
       </View>
     </SafeAreaView>
   );
@@ -121,7 +198,8 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 20,
+    // alignItems: "center",
+    marginTop: 50,
   },
   income: {
     flexDirection: "row",

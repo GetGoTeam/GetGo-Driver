@@ -4,24 +4,53 @@ import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import {
   faCircle,
   faCommentDots,
-  faLocationArrow,
   faLocationCrosshairs,
-  faMessage,
   faPhone,
-  faPowerOff,
   faReceipt,
+  faToggleOn,
 } from "@fortawesome/free-solid-svg-icons";
 import GoogleMap from "../../components/GoogleMap";
 import { useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from "react-redux";
+import { setTripDetails } from "../../../slices/navSlice";
 
 const OrderPage2 = () => {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+
   const [stepTakeCus, setStepTakeCus] = useState(0);
-  const statusTakeCus = ["Tôi đã đến nơi", "Đón khách", "Khách xuống xe"];
+  const [statusHeader, setStatusHeader] = useState(false);
+  const statusTakeCus = [
+    "Tôi đã đến nơi",
+    "Đón khách",
+    "Khách xuống xe",
+    "Hoàn thành đơn",
+  ];
 
   const handleOrderStep = () => {
-    setStepTakeCus(stepTakeCus + 1);
-    if (stepTakeCus > 2) {
+    if (stepTakeCus < 3) {
+      setStepTakeCus(stepTakeCus + 1);
     }
+    setStatusHeader(stepTakeCus > 1);
+  };
+
+  const hanldeViewDetails = () => {
+    dispatch(
+      setTripDetails({
+        path: "OrderPage2",
+        payment: { price: "50.000", type: "Tiền mặt" },
+        pickUp: "135b Tran Hung Dao, P. Cau Ong Lanh, Quan 1, TP HCM",
+        location: "224 Nguyen Van Cu, Quan 5, TP HCM",
+        feedback: {
+          content:
+            "Bạn 10 điểm, tôi sẽ đánh giá cho bạn 5 sao. Nhưng lần sau nhớ đẹp zai hơn nhá",
+          star: 5,
+        },
+      })
+    );
+
+    navigation.navigate("TripDetails");
   };
   return (
     <View style={styles.container}>
@@ -39,13 +68,17 @@ const OrderPage2 = () => {
           </View>
         </View>
         <View style={styles.block_nav_status}>
-          <View style={[styles.status1]}></View>
-          <View style={[styles.status2, styles.color_black]}></View>
+          <View
+            style={[styles.status1, statusHeader ? styles.color_black : ""]}
+          ></View>
+          <View
+            style={[styles.status2, !statusHeader ? styles.color_black : ""]}
+          ></View>
         </View>
         <View style={styles.heading_title}>
           <View style={styles.text_block}>
             <Text style={styles.title_text}>
-              224 Nguyễn Văn Cừ, Q.5, TP HCM{" "}
+              224 Nguyễn Văn Cừ, Q.5, TP HCM
             </Text>
             <View style={styles.title_fee}>
               <Text style={styles.title_text}>GoDriver</Text>
@@ -84,11 +117,7 @@ const OrderPage2 = () => {
           </View>
           <View style={styles.block_item}>
             <View style={styles.ic_block}>
-              <FontAwesomeIcon
-                icon={faPowerOff}
-                size={24}
-                color={colors.primary_300}
-              />
+              <FontAwesomeIcon icon={faToggleOn} size={24} color="#30AA48" />
             </View>
             <Text style={styles.item_text}>Sẵn sàng</Text>
           </View>
@@ -99,7 +128,7 @@ const OrderPage2 = () => {
               <View
                 style={[
                   styles.block_main,
-                  styles[stepTakeCus > 0 ? "color_green" : ""],
+                  styles[stepTakeCus > 0 ? "color_bg_green" : ""],
                 ]}
               >
                 <Text
@@ -113,10 +142,13 @@ const OrderPage2 = () => {
               </View>
             </TouchableOpacity>
           </View>
-          <View style={styles.block_item}>
+          <TouchableOpacity
+            onPress={hanldeViewDetails}
+            style={styles.block_item}
+          >
             <FontAwesomeIcon icon={faReceipt} color="white" size={32} />
             <Text style={styles.item_text}>Xem đơn</Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -153,7 +185,6 @@ const styles = StyleSheet.create({
     paddingStart: 15,
     backgroundColor: colors.primary_200,
   },
-
   heading_nav: {
     height: 80,
     paddingEnd: 50,
@@ -251,8 +282,8 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    borderColor: "#30AA48",
-    borderWidth: 2,
+    // borderColor: "#30AA48",
+    // borderWidth: 2,
   },
   btn_follow: {
     height: 101,
@@ -260,7 +291,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   follow_block: {
-    width: 290,
+    width: "66.8%",
     height: 101,
     borderRightColor: "white",
     borderRightWidth: 2,
@@ -283,8 +314,11 @@ const styles = StyleSheet.create({
   color_white: {
     color: "white",
   },
-  color_green: {
+  color_bg_green: {
     backgroundColor: "#30AA48",
+  },
+  color_green: {
+    color: "#30AA48",
   },
 });
 

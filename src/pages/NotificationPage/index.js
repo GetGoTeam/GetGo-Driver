@@ -75,9 +75,12 @@ const NotificationPage = () => {
         </View>
         <View style={styles.btn}>
           <View style={styles.btn_block}>
-            <View style={styles.btn_cancel}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("HomePage")}
+              style={styles.btn_cancel}
+            >
               <Text style={styles.btn_text1}>Hủy</Text>
-            </View>
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate("OrderPage2")}>
               <View style={styles.btn_accept}>
                 <Text style={styles.btn_text2}>Nhận Đơn</Text>

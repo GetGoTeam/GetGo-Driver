@@ -1,82 +1,74 @@
 import { View } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import { useSelector } from "react-redux";
-import { selectOrigin } from "../../../slices/navSlice";
-
-import React, { useEffect, useState } from "react";
-import { PermissionsAndroid, Platform } from "react-native";
-import Geolocation from "react-native-geolocation-service";
+import { selectOrigin, selectDestination } from "../../../slices/navSlice";
+import { GOOGLE_MAPS_APIKEY } from "@env";
+import React, { useEffect, useRef, useState } from "react";
+import MapViewDirections from "react-native-maps-directions";
+import { colors } from "../../utils/colors";
 
 const GoogleMap = () => {
   const origin = useSelector(selectOrigin);
-  const { location, setLocation } = useState({ longitude: 0, latitude: 0 });
+  const destination = useSelector(selectDestination);
+  const mapRef = useRef();
+  const [currentRegion, setCurrentRegion] = useState({
+    latitude: 0,
+    longitude: 0,
+    latitudeDelta: 0.01,
+    longitudeDelta: 0.005,
+  });
 
-  const getCurrentLocation = () => {
-    if (Platform.OS === "android" && Platform.Version >= 23) {
-      // Kiểm tra và yêu cầu quyền truy cập vị trí trên Android 6.0 trở lên
-      PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      )
-        .then(granted => {
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            // Quyền truy cập vị trí đã được cấp
-            Geolocation.getCurrentPosition(
-              position => {
-                setLocation({
-                  longitude: position.coords.longitude,
-                  latitude: position.coords.latitude,
-                });
-              },
-              error => {
-                console.log("Error:", error);
-              },
-              { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-            );
-          } else {
-            // Quyền truy cập vị trí bị từ chối
-            console.log("Location permission denied");
-          }
-        })
-        .catch(error => {
-          console.log("Error:", error);
-        });
-    } else {
-      // Trường hợp là iOS hoặc Android dưới 6.0
-      Geolocation.getCurrentPosition(
-        position => {
-          setLocation({
-            longitude: position.coords.longitude,
-            latitude: position.coords.latitude,
-          });
-        },
-        error => {
-          console.log("Error:", error);
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-      );
-    }
+  // console.log(origin);
+  const handleRegionChange = newRegion => {
+    setCurrentRegion(newRegion);
   };
+
+  useEffect(() => {
+    if (origin) {
+      setCurrentRegion({
+        latitude: origin.latitude,
+        longitude: origin.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.005,
+      });
+
+      if (destination)
+        mapRef.current.fitToSuppliedMarkers(["origin", "destination"], {
+          edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
+        });
+
+      // console.log(destination);
+    }
+  }, [origin, destination]);
 
   return (
     <MapView
+      ref={mapRef}
       style={{ flex: 1, zIndex: 0 }}
       mapType="mutedStandard"
-      initialRegion={{
-        latitude: 10.8231,
-        longitude: 106.6297,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005,
-      }}
+      region={currentRegion}
+      initialRegion={currentRegion}
+      // onRegionChange={handleRegionChange}
     >
-      <Marker
-        coordinate={{
-          latitude: 10.8231,
-          longitude: 106.6297,
-        }}
-        title="Origin"
-        description="description"
-        identifier="origin"
-      />
+      {origin && destination && (
+        <MapViewDirections
+          origin={origin}
+          destination={destination}
+          apikey={GOOGLE_MAPS_APIKEY}
+          strokeWidth={3}
+          strokeColor={colors.primary_300}
+        />
+      )}
+      {origin && (
+        <Marker title="Điểm đón" coordinate={origin} identifier="origin" />
+      )}
+      {destination && (
+        <Marker
+          title="Điểm đến"
+          coordinate={destination}
+          identifier="destination"
+        />
+      )}
     </MapView>
   );
 };
