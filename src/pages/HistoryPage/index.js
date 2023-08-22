@@ -1,32 +1,34 @@
-import { StyleSheet, Text, View, Button } from "react-native";
-// import NavBase from "../../components/NavBase";
-import { colors, text } from "../../utils/colors";
-import GoogleApiSearch from "../../components/GoogleApiSearch";
-import GoogleMap from "../../components/GoogleMap";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  ScrollView,
+  Image,
+} from "react-native";
+// import NavBar from "../../components/NavBar";
+import { colors } from "../../utils/colors";
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
+import {
+  faArrowLeft,
+  faCircleInfo,
+  faCommentDots,
+  faLocationDot,
+  faStar,
+} from "@fortawesome/free-solid-svg-icons";
+import { faCircleDot } from "@fortawesome/free-regular-svg-icons";
+import { useNavigation } from "@react-navigation/native";
+import { selectOrigin, selectTripDetails } from "../../../slices/navSlice";
+import { useSelector } from "react-redux";
 
-const HistoryPage = ({ navigation }) => {
-  return (
-    <View style={styles.container}>
-      <GoogleApiSearch />
-      {/* <View style={styles.content}>
-        <Text>lich su</Text>
-      </View> */}
-      {/* <NavBase navigation={navigation} activeIndex={3} /> */}
-    </View>
-  );
+const HistoryPage = () => {
+  return <View style={styles.container}></View>;
 };
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // backgroundColor: colors.primary_50,
-    // alignItems: "center",
-    // justifyContent: "center",
-  },
-  content: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: colors.primary_50,
   },
 });
 

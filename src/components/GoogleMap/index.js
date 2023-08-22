@@ -37,7 +37,7 @@ const GoogleMap = () => {
           edgePadding: { top: 50, right: 50, bottom: 50, left: 50 },
         });
 
-      // console.log(destination);
+      console.log(destination);
     }
   }, [origin, destination]);
 

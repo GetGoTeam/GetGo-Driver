@@ -15,6 +15,9 @@ import NotificationPage from "./src/pages/NotificationPage";
 import ProfilePage from "./src/pages/ProfilePage";
 import OrderPage2 from "./src/pages/OrderPage2";
 import TripDetails from "./src/pages/TripDetails";
+import CompleteTrip from "./src/pages/CompleteTrip";
+import ChattingPage from "./src/pages/ChattingPage";
+import EditInformation from "./src/pages/EditInformation";
 
 export default function App() {
   const Stack = createStackNavigator();
@@ -38,6 +41,9 @@ export default function App() {
             <Stack.Screen name="ProfilePage" component={ProfilePage} />
             <Stack.Screen name="OrderPage2" component={OrderPage2} />
             <Stack.Screen name="TripDetails" component={TripDetails} />
+            <Stack.Screen name="CompleteTrip" component={CompleteTrip} />
+            <Stack.Screen name="ChattingPage" component={ChattingPage} />
+            <Stack.Screen name="EditInformation" component={EditInformation} />
           </Stack.Navigator>
         </SafeAreaProvider>
       </NavigationContainer>

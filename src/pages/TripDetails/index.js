@@ -92,23 +92,29 @@ const NotificationPage = () => {
               </View>
             </View>
           </View>
-          <View style={styles.feedback_container}>
-            <View style={styles.feedback_title}>
-              <FontAwesomeIcon icon={faCommentDots} size={25} color="#2E2E2E" />
-              <Text style={styles.title_text}>Đánh giá của khách hàng</Text>
-            </View>
-            <View style={styles.feedback_block}>
-              <Text style={styles.feedback_text}>
-                {tripDetails.feedback.content}
-              </Text>
-              <View style={styles.feedback_star}>
-                <Text style={styles.feedback_star_text}>
-                  {tripDetails.feedback.star}
+          {tripDetails.feedback.show && (
+            <View style={styles.feedback_container}>
+              <View style={styles.feedback_title}>
+                <FontAwesomeIcon
+                  icon={faCommentDots}
+                  size={25}
+                  color="#2E2E2E"
+                />
+                <Text style={styles.title_text}>Đánh giá của khách hàng</Text>
+              </View>
+              <View style={styles.feedback_block}>
+                <Text style={styles.feedback_text}>
+                  {tripDetails.feedback.content}
                 </Text>
-                <FontAwesomeIcon icon={faStar} color="#FFF500" size={24} />
+                <View style={styles.feedback_star}>
+                  <Text style={styles.feedback_star_text}>
+                    {tripDetails.feedback.star}
+                  </Text>
+                  <FontAwesomeIcon icon={faStar} color="#FFF500" size={24} />
+                </View>
               </View>
             </View>
-          </View>
+          )}
         </View>
       </ScrollView>
     </View>

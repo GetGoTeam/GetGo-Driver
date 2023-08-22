@@ -94,9 +94,7 @@ const HomePage = () => {
     dispatch(
       setOrigin({ latitude: latitudePicked, longitude: longitudePicked })
     );
-    // dispatch(
-    //   setDestination({ latitude: latitudePicked, longitude: longitudePicked })
-    // );
+    // dispatch(setDestination({ latitude: 10.8231, longitude: 106.6297 }));
   }, [latitudePicked, longitudePicked]);
 
   return (

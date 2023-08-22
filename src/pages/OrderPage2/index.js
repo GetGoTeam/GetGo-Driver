@@ -12,8 +12,8 @@ import {
 import GoogleMap from "../../components/GoogleMap";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { useDispatch } from "react-redux";
-import { setTripDetails } from "../../../slices/navSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { selectOrigin, setTripDetails } from "../../../slices/navSlice";
 
 const OrderPage2 = () => {
   const navigation = useNavigation();
@@ -21,18 +21,14 @@ const OrderPage2 = () => {
 
   const [stepTakeCus, setStepTakeCus] = useState(0);
   const [statusHeader, setStatusHeader] = useState(false);
-  const statusTakeCus = [
-    "Tôi đã đến nơi",
-    "Đón khách",
-    "Khách xuống xe",
-    "Hoàn thành đơn",
-  ];
+  const statusTakeCus = ["Đón khách", "Khách xuống xe", "Hoàn thành đơn"];
 
   const handleOrderStep = () => {
-    if (stepTakeCus < 3) {
+    if (stepTakeCus === 2) navigation.navigate("CompleteTrip");
+    if (stepTakeCus < 2) {
       setStepTakeCus(stepTakeCus + 1);
     }
-    setStatusHeader(stepTakeCus > 1);
+    setStatusHeader(stepTakeCus > 0);
   };
 
   const hanldeViewDetails = () => {
@@ -43,6 +39,7 @@ const OrderPage2 = () => {
         pickUp: "135b Tran Hung Dao, P. Cau Ong Lanh, Quan 1, TP HCM",
         location: "224 Nguyen Van Cu, Quan 5, TP HCM",
         feedback: {
+          show: false,
           content:
             "Bạn 10 điểm, tôi sẽ đánh giá cho bạn 5 sao. Nhưng lần sau nhớ đẹp zai hơn nhá",
           star: 5,
@@ -52,6 +49,7 @@ const OrderPage2 = () => {
 
     navigation.navigate("TripDetails");
   };
+
   return (
     <View style={styles.container}>
       <View style={styles.heading}>
@@ -111,10 +109,13 @@ const OrderPage2 = () => {
             <FontAwesomeIcon icon={faPhone} size={32} color="white" />
             <Text style={styles.item_text}>Gọi</Text>
           </View>
-          <View style={[styles.block_item, styles.block_item_center]}>
+          <TouchableOpacity
+            style={[styles.block_item, styles.block_item_center]}
+            onPress={() => navigation.navigate("ChattingPage")}
+          >
             <FontAwesomeIcon icon={faCommentDots} size={32} color="white" />
             <Text style={styles.item_text}>Nhắn tin</Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.block_item}>
             <View style={styles.ic_block}>
               <FontAwesomeIcon icon={faToggleOn} size={24} color="#30AA48" />
