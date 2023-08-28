@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
   },
   chat_input: {
     width: 330,
+    maxWidth: 330,
     paddingTop: 10,
     paddingBottom: 10,
     paddingLeft: 15,

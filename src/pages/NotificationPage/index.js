@@ -1,19 +1,62 @@
-import { StyleSheet, Text, View, Button, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Animated,
+  TouchableOpacity,
+} from "react-native";
 // import NavBar from "../../components/NavBar";
 import { colors, text } from "../../utils/colors";
 import { Image } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import {
-  faCircleInfo,
-  faDotCircle,
-  faLocationDot,
-} from "@fortawesome/free-solid-svg-icons";
+import { faCircleInfo, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import { faCircleDot } from "@fortawesome/free-regular-svg-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useState, useRef, useEffect } from "react";
 
 const NotificationPage = () => {
   const navigation = useNavigation();
+  const [count, setCount] = useState(10);
+  const intervalRef = useRef(null);
+  const rotation = useRef(new Animated.Value(0)).current;
 
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+
+  const rotateStyle = {
+    transform: [
+      {
+        rotate: rotation.interpolate({
+          inputRange: [0, 1],
+          outputRange: ["0deg", "360deg"],
+        }),
+      },
+    ],
+  };
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setCount(prevCount => {
+        if (prevCount === 0) {
+          clearInterval(intervalRef.current);
+          navigation.navigate("HomePage");
+          return prevCount;
+        }
+        return prevCount - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(intervalRef.current);
+    };
+  }, []);
   return (
     <View style={styles.container}>
       <View style={styles.heading}>
@@ -29,9 +72,9 @@ const NotificationPage = () => {
             />
           </View>
         </View>
-        <View style={styles.heading_count}>
-          <Text>10s</Text>
-        </View>
+        <Animated.View style={[styles.heading_count, rotateStyle]}>
+          <Text>{count}s</Text>
+        </Animated.View>
       </View>
       <View style={styles.payment}>
         <View>
@@ -76,12 +119,20 @@ const NotificationPage = () => {
         <View style={styles.btn}>
           <View style={styles.btn_block}>
             <TouchableOpacity
-              onPress={() => navigation.navigate("HomePage")}
+              onPress={() => {
+                clearInterval(intervalRef.current);
+                navigation.navigate("HomePage");
+              }}
               style={styles.btn_cancel}
             >
               <Text style={styles.btn_text1}>Hủy</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate("OrderPage2")}>
+            <TouchableOpacity
+              onPress={() => {
+                clearInterval(intervalRef.current);
+                navigation.navigate("OrderPage2");
+              }}
+            >
               <View style={styles.btn_accept}>
                 <Text style={styles.btn_text2}>Nhận Đơn</Text>
               </View>
