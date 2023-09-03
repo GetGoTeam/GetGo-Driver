@@ -36,7 +36,7 @@ const ProfilePage = () => {
           </View>
           <View>
             <Image
-              source={require("../../../assets/imgs/header.png")}
+              source={require("~/assets/header.png")}
               style={styles.heading_img}
             />
           </View>
@@ -92,7 +92,10 @@ const ProfilePage = () => {
       </View>
 
       <View style={styles.logout_container}>
-        <TouchableOpacity style={styles.logout_block}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("SignIn")}
+          style={styles.logout_block}
+        >
           <FontAwesomeIcon icon={faRightFromBracket} size={24} color="white" />
           <Text style={styles.logout_title}>Đăng xuất</Text>
         </TouchableOpacity>

@@ -3,7 +3,6 @@ import { Provider } from "react-redux";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import "react-native-gesture-handler";
-import { NavigationContainer } from "@react-navigation/native";
 import {
   createStackNavigator,
   TransitionPresets,
@@ -18,8 +17,14 @@ import TripDetails from "./src/pages/TripDetails";
 import CompleteTrip from "./src/pages/CompleteTrip";
 import ChattingPage from "./src/pages/ChattingPage";
 import EditInformation from "./src/pages/EditInformation";
+import SignIn from "./src/pages/SignIn";
+import SignUp from "./src/pages/SignUp";
+import EStyleSheet from "react-native-extended-stylesheet";
+import { NavigationContainer } from "@react-navigation/native";
 
-export default function App() {
+EStyleSheet.build();
+
+export default App = () => {
   const Stack = createStackNavigator();
 
   return (
@@ -31,6 +36,7 @@ export default function App() {
               headerShown: false,
               ...TransitionPresets.SlideFromRightIOS,
             }}
+            initialRouteName="SignIn"
           >
             <Stack.Screen name="HomePage" component={HomePage} />
             <Stack.Screen
@@ -44,9 +50,11 @@ export default function App() {
             <Stack.Screen name="CompleteTrip" component={CompleteTrip} />
             <Stack.Screen name="ChattingPage" component={ChattingPage} />
             <Stack.Screen name="EditInformation" component={EditInformation} />
+            <Stack.Screen name="SignIn" component={SignIn} />
+            <Stack.Screen name="SignUp" component={SignUp} />
           </Stack.Navigator>
         </SafeAreaProvider>
       </NavigationContainer>
     </Provider>
   );
-}
+};

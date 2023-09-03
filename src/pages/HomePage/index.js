@@ -22,9 +22,10 @@ import GoogleMap from "../../components/GoogleMap";
 import { colors, text_col } from "../../utils/colors";
 import * as Location from "expo-location";
 import { useDispatch } from "react-redux";
-import { setOrigin, setDestination } from "../../../slices/navSlice";
+import { setOrigin } from "../../../slices/navSlice";
 import { GOOGLE_MAPS_APIKEY } from "@env";
 import axios from "axios";
+import Loading from "~/src/components/Loading";
 
 const HomePage = () => {
   const [openIncome, setOpenIncome] = useState(false);
@@ -33,7 +34,7 @@ const HomePage = () => {
   const [latitudePicked, setLatitudePicked] = useState(0);
   const [longitudePicked, setLongitudePicked] = useState(0);
 
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const dispatch = useDispatch();
 
@@ -82,7 +83,7 @@ const HomePage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy vị trí:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -97,7 +98,9 @@ const HomePage = () => {
     // dispatch(setDestination({ latitude: 10.8231, longitude: 106.6297 }));
   }, [latitudePicked, longitudePicked]);
 
-  return (
+  return isLoading ? (
+    <Loading />
+  ) : (
     <SafeAreaView style={{ flex: 1, position: "relative" }}>
       <StatusBar style={styles.zindex_item} />
       <View style={[styles.heading, styles.zindex_item]}>

@@ -72,7 +72,7 @@ export default () => {
           </View>
           <View>
             <Image
-              source={require("../../../assets/imgs/header.png")}
+              source={require("~assets/header.png")}
               style={styles.heading_img}
             />
           </View>
