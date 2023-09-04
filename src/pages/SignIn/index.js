@@ -61,7 +61,7 @@ const SignIn = () => {
 
         dispatch(setInforDriver({ ...driverInf, token: res.data.token }));
 
-        // console.log({ ...driverInf, token: res.data.token });
+        console.log(driverInf);
         navigation.reset({
           index: 0,
           routes: [{ name: "HomePage" }],

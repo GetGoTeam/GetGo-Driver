@@ -99,7 +99,9 @@ const HomePage = () => {
   }, [latitudePicked, longitudePicked]);
 
   return isLoading ? (
-    <Loading />
+    <SafeAreaView style={{ flex: 1, position: "relative" }}>
+      <Loading loading={isLoading} />
+    </SafeAreaView>
   ) : (
     <SafeAreaView style={{ flex: 1, position: "relative" }}>
       <StatusBar style={styles.zindex_item} />

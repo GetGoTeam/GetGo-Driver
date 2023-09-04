@@ -4,7 +4,7 @@ import {
   faPhone,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -16,9 +16,92 @@ import {
 } from "react-native";
 import { colors, text_col } from "../../utils/colors";
 import { useNavigation } from "@react-navigation/native";
+import socketServcies from "~/src/utils/websocketContext";
+import { useSelector } from "react-redux";
+import { selectInforDriver } from "~/slices/navSlice";
+import request from "~/src/utils/request";
 
 export default () => {
+  const scrollViewRef = useRef(null);
+
   const navigation = useNavigation();
+  const [chatBuffers, setChatBuffers] = useState([]);
+  const [textInput, setTextInput] = useState("");
+
+  const inforDriver = useSelector(selectInforDriver);
+
+  const formatTime = dateString => {
+    const date = new Date(dateString);
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+
+    const formattedTime = `${hours}:${minutes}`;
+    return formattedTime;
+  };
+
+  const updateInputText = text => {
+    setTextInput(text);
+  };
+
+  const handleSendMessage = () => {
+    setTextInput("");
+
+    const dataSend = {
+      customer_receive: "64e70125d57e0b851d07d068",
+      content: textInput,
+    };
+
+    const headers = { Authorization: "Bearer " + inforDriver.token };
+    request
+      .post("create-message", dataSend, { headers })
+      .then(response => {
+        // console.log(response.data);
+        scrollViewRef.current.scrollToEnd({ animated: true });
+      })
+      .catch(error => {
+        console.log(error);
+      });
+  };
+
+  useEffect(() => {
+    try {
+      socketServcies.initializeSocket();
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      socketServcies.on(
+        `message_64e70125d57e0b851d07d068_${inforDriver.id}`,
+        msg => {
+          // console.log(chatBuffers);
+          // const chatArr = [...chatBuffers];
+          // console.log(chatArr);
+          setChatBuffers(chatBuffers => [...chatBuffers, msg.content]);
+          scrollViewRef.current.scrollToEnd({ animated: true });
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const headers = { Authorization: "Bearer " + inforDriver.token };
+    request
+      .get(`get-messages-customer/64e70125d57e0b851d07d068`, { headers })
+      .then(response => {
+        // console.log(response.data);
+        setChatBuffers(response.data);
+        scrollViewRef.current.scrollToEnd({ animated: true });
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.heading_container}>
@@ -36,25 +119,48 @@ export default () => {
         </View>
         <FontAwesomeIcon icon={faPhone} size={26} color="white" />
       </View>
-      <ScrollView style={styles.mess_container}>
-        <View style={styles.mess_receive}>
-          <Text style={styles.mess_txt}>Tôi đang đến đón bạn</Text>
-          <Text style={styles.mess_time}>11:29</Text>
-        </View>
-        <View style={styles.mess_send}>
-          <Text style={styles.mess_txt}>Tôi đang chờ bạn đến đón</Text>
-          <Text style={styles.mess_time}>11:29</Text>
-        </View>
+      <ScrollView ref={scrollViewRef} style={styles.mess_container}>
+        {chatBuffers.map((value, index) => {
+          return value.driver_receive === inforDriver.id ? (
+            <View key={index} style={styles.mess_receive}>
+              <Text style={styles.mess_txt}>{value.content}</Text>
+              <Text style={styles.mess_time}>
+                {formatTime(value.createdAt)}
+              </Text>
+            </View>
+          ) : (
+            <View key={index} style={styles.mess_send}>
+              <Text style={styles.mess_txt}>{value.content}</Text>
+              <Text style={styles.mess_time}>
+                {formatTime(value.createdAt)}
+              </Text>
+            </View>
+          );
+        })}
       </ScrollView>
       <View style={styles.chat_container}>
-        <TextInput style={styles.chat_input} placeholder="Nhắn tin" />
-        <TouchableOpacity>
+        <TextInput
+          style={styles.chat_input}
+          placeholder="Nhắn tin"
+          value={textInput}
+          onChangeText={updateInputText}
+        />
+
+        {textInput === "" ? (
           <FontAwesomeIcon
             icon={faPaperPlane}
             size={24}
-            color={colors.primary_300}
+            color={text_col.color_300}
           />
-        </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={handleSendMessage}>
+            <FontAwesomeIcon
+              icon={faPaperPlane}
+              size={24}
+              color={colors.primary_300}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -63,6 +169,7 @@ export default () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "white",
   },
   heading_container: {
     backgroundColor: colors.primary_300,
@@ -93,7 +200,8 @@ const styles = StyleSheet.create({
   },
   mess_container: {
     backgroundColor: "white",
-    padding: 20,
+    paddingHorizontal: 20,
+    marginTop: 5,
   },
   mess_receive: {
     width: "auto",
@@ -103,6 +211,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary_50,
     borderRadius: 10,
     alignSelf: "flex-start",
+    marginBottom: 10,
   },
   mess_send: {
     width: "auto",
@@ -111,6 +220,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary_100,
     borderRadius: 10,
     alignSelf: "flex-end",
+    marginBottom: 10,
   },
   mess_txt: {
     fontSize: 16,
