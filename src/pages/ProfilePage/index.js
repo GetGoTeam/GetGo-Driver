@@ -17,9 +17,19 @@ import {
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigation } from "@react-navigation/native";
+import { selectInforDriver, setInforDriver } from "~/slices/navSlice";
+import { useDispatch, useSelector } from "react-redux";
 
 const ProfilePage = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const inforDriver = useSelector(selectInforDriver);
+
+  const handleSignout = () => {
+    dispatch(setInforDriver(null));
+    navigation.navigate("SignIn");
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.heading}>
@@ -54,10 +64,10 @@ const ProfilePage = () => {
             source={require("../../../assets/portrait.png")}
           />
           <View style={styles.infor_title}>
-            <Text style={styles.title_name}>Trần Bảo Long</Text>
+            <Text style={styles.title_name}>{inforDriver.username}</Text>
             <View style={styles.title_star}>
               <FontAwesomeIcon icon={faStar} color="#FFA902" />
-              <Text style={styles.star_number}>4.99</Text>
+              <Text style={styles.star_number}>{inforDriver.rated}</Text>
             </View>
           </View>
         </View>
@@ -92,10 +102,7 @@ const ProfilePage = () => {
       </View>
 
       <View style={styles.logout_container}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate("SignIn")}
-          style={styles.logout_block}
-        >
+        <TouchableOpacity onPress={handleSignout} style={styles.logout_block}>
           <FontAwesomeIcon icon={faRightFromBracket} size={24} color="white" />
           <Text style={styles.logout_title}>Đăng xuất</Text>
         </TouchableOpacity>

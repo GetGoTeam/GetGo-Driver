@@ -7,6 +7,7 @@ import {
   Image,
   StatusBar,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import {
@@ -21,11 +22,17 @@ import NavBase from "~components/NavBase/index";
 import GoogleMap from "../../components/GoogleMap";
 import { colors, text_col } from "../../utils/colors";
 import * as Location from "expo-location";
-import { useDispatch } from "react-redux";
-import { setOrigin } from "../../../slices/navSlice";
-import { GOOGLE_MAPS_APIKEY } from "@env";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectInforDriver,
+  setOrigin,
+  setTripDetails,
+} from "../../../slices/navSlice";
+import { GOONG_MAPS_APIKEY } from "@env";
 import axios from "axios";
 import Loading from "~/src/components/Loading";
+import { useNavigation } from "@react-navigation/native";
+import socketServcies from "~/src/utils/websocketContext";
 
 const HomePage = () => {
   const [openIncome, setOpenIncome] = useState(false);
@@ -36,21 +43,40 @@ const HomePage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
 
+  const navigation = useNavigation();
+
   const dispatch = useDispatch();
+  const inforDriver = useSelector(selectInforDriver);
+
+  const handleTurnOnConnections = () => {
+    if (!inforDriver.licensePlate || !inforDriver.capacity) {
+      Alert.alert(
+        "Bạn phải cập nhật thông tin xe trước khi bắt đầu hoạt động."
+      );
+      navigation.navigate("EditInformation");
+    } else {
+      setOffline(!offline);
+    }
+  };
 
   const getPlaceFromCoordinates = async (latitude, longitude) => {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_APIKEY}`;
+    const url = `https://rsapi.goong.io/Geocode?latlng=${latitude},%20${longitude}&api_key=${GOONG_MAPS_APIKEY}`;
 
     try {
       const response = await axios.get(url);
       if (response.data.results.length > 0) {
+        setIsLoading(false);
+
         return response.data.results[0].formatted_address;
       } else {
-        // console.log(response.data.error_message);
+        console.log("error:" + response.data.error_message);
+        setIsLoading(false);
+
         return null;
       }
     } catch (error) {
       console.error("Error getting place from coordinates:", error);
+      setIsLoading(false);
       return "Error";
     }
   };
@@ -63,6 +89,7 @@ const HomePage = () => {
         console.warn(
           "Quyền truy cập vị trí không được cấp, vui lòng kiểm tra lại."
         );
+        setIsLoading(false);
         return;
       }
 
@@ -73,19 +100,31 @@ const HomePage = () => {
       setLatitudePicked(location.coords.latitude);
       setLongitudePicked(location.coords.longitude);
 
-      // console.log(location.coords.latitude);
-
       // Chuyển đổi vị trí hiện tại thành địa chỉ
-      const address = await getPlaceFromCoordinates(
-        location.coords.latitude,
-        location.coords.longitude
-      );
+      // const address = await getPlaceFromCoordinates(
+      //   location.coords.latitude,
+      //   location.coords.longitude
+      // );
     } catch (error) {
       console.error("Lỗi khi lấy vị trí:", error);
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
+
+  useEffect(() => {
+    if (offline) {
+      if (socketServcies.connected) socketServcies.disconnectSocket();
+      console.log(socketServcies.connected);
+    } else {
+      socketServcies.initializeSocket("");
+      socketServcies.on(inforDriver._id, msg => {
+        console.log(msg);
+        dispatch(setTripDetails(msg.content));
+        navigation.navigate("ReceiveTrip");
+        socketServcies.disconnectSocket();
+      });
+    }
+  }, [offline]);
 
   useEffect(() => {
     getLocationCurrent();
@@ -95,7 +134,6 @@ const HomePage = () => {
     dispatch(
       setOrigin({ latitude: latitudePicked, longitude: longitudePicked })
     );
-    // dispatch(setDestination({ latitude: 10.8231, longitude: 106.6297 }));
   }, [latitudePicked, longitudePicked]);
 
   return isLoading ? (
@@ -137,7 +175,7 @@ const HomePage = () => {
           />
           <View style={styles.btn_star}>
             <FontAwesomeIcon icon={faStar} color="#FFF500" size={18} />
-            <Text style={styles.btn_star_text}>4.9</Text>
+            <Text style={styles.btn_star_text}>{inforDriver.rated}</Text>
           </View>
         </View>
       </View>
@@ -147,7 +185,7 @@ const HomePage = () => {
           styles.zindex_item,
         ]}
       >
-        <TouchableOpacity onPress={() => setOffline(!offline)}>
+        <TouchableOpacity onPress={handleTurnOnConnections}>
           <View
             style={
               offline ? styles.btn_active_status : styles.btn_inactive_status

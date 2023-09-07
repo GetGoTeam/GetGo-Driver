@@ -1,20 +1,29 @@
 import io from "socket.io-client";
 
-const SOCKET_URL = "http://192.168.1.20:3003";
+const SOCKET_URL_MESSAGE = "http://192.168.1.20:3003";
+const SOCKET_URL_TRIP = "http://192.168.1.20:3014";
 
 class WSService {
-  initializeSocket = async () => {
+  constructor() {
+    this.connected = false;
+  }
+  initializeSocket = async key => {
     try {
-      this.socket = io(SOCKET_URL, {
-        transports: ["websocket"],
-      });
+      this.socket = io(
+        key === "chatting" ? SOCKET_URL_MESSAGE : SOCKET_URL_TRIP,
+        {
+          transports: ["websocket"],
+        }
+      );
       console.log("initializing socket", this.socket);
 
       this.socket.on("connect", data => {
         console.log("=== socket connected ====");
+        this.connected = true; // Socket đã kết nối
       });
 
       this.socket.on("disconnect", data => {
+        this.connected = false; // Socket đã ngắt kết nối
         console.log("=== socket disconnected ====");
       });
 
@@ -36,6 +45,11 @@ class WSService {
 
   removeListener(listenerName) {
     this.socket.removeListener(listenerName);
+  }
+  disconnectSocket() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
   }
 }
 

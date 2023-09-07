@@ -18,7 +18,7 @@ import { colors, text_col } from "../../utils/colors";
 import { useNavigation } from "@react-navigation/native";
 import socketServcies from "~/src/utils/websocketContext";
 import { useSelector } from "react-redux";
-import { selectInforDriver } from "~/slices/navSlice";
+import { selectInforDriver, selectTripDetails } from "~/slices/navSlice";
 import request from "~/src/utils/request";
 
 export default () => {
@@ -29,6 +29,7 @@ export default () => {
   const [textInput, setTextInput] = useState("");
 
   const inforDriver = useSelector(selectInforDriver);
+  const tripDetails = useSelector(selectTripDetails);
 
   const formatTime = dateString => {
     const date = new Date(dateString);
@@ -47,7 +48,7 @@ export default () => {
     setTextInput("");
 
     const dataSend = {
-      customer_receive: "64e70125d57e0b851d07d068",
+      customer_receive: tripDetails.customer,
       content: textInput,
     };
 
@@ -56,7 +57,7 @@ export default () => {
       .post("create-message", dataSend, { headers })
       .then(response => {
         // console.log(response.data);
-        scrollViewRef.current.scrollToEnd({ animated: true });
+        // scrollViewRef.current.scrollToEnd({ animated: true });
       })
       .catch(error => {
         console.log(error);
@@ -65,7 +66,7 @@ export default () => {
 
   useEffect(() => {
     try {
-      socketServcies.initializeSocket();
+      socketServcies.initializeSocket("chatting");
     } catch (error) {
       console.log(error);
     }
@@ -74,13 +75,13 @@ export default () => {
   useEffect(() => {
     try {
       socketServcies.on(
-        `message_64e70125d57e0b851d07d068_${inforDriver.id}`,
+        `message_${tripDetails.customer}_${inforDriver._id}`,
         msg => {
           // console.log(chatBuffers);
           // const chatArr = [...chatBuffers];
           // console.log(chatArr);
           setChatBuffers(chatBuffers => [...chatBuffers, msg.content]);
-          scrollViewRef.current.scrollToEnd({ animated: true });
+          // scrollViewRef.current.scrollToEnd({ animated: true });
         }
       );
     } catch (error) {
@@ -91,22 +92,30 @@ export default () => {
   useEffect(() => {
     const headers = { Authorization: "Bearer " + inforDriver.token };
     request
-      .get(`get-messages-customer/64e70125d57e0b851d07d068`, { headers })
+      .get(`get-messages-customer/${tripDetails.customer}`, { headers })
       .then(response => {
         // console.log(response.data);
         setChatBuffers(response.data);
-        scrollViewRef.current.scrollToEnd({ animated: true });
       })
       .catch(err => {
         console.log(err);
       });
   }, []);
 
+  useEffect(() => {
+    scrollViewRef.current.scrollToEnd({ animated: true });
+  }, [chatBuffers]);
+
   return (
     <View style={styles.container}>
       <View style={styles.heading_container}>
         <View style={styles.heading_left}>
-          <TouchableOpacity onPress={() => navigation.navigate("OrderPage2")}>
+          <TouchableOpacity
+            onPress={() => {
+              socketServcies.disconnectSocket();
+              navigation.navigate("ProceedingTripPage");
+            }}
+          >
             <FontAwesomeIcon icon={faArrowLeft} size={28} color="white" />
           </TouchableOpacity>
           <View style={styles.heading_left_infor}>
@@ -121,7 +130,7 @@ export default () => {
       </View>
       <ScrollView ref={scrollViewRef} style={styles.mess_container}>
         {chatBuffers.map((value, index) => {
-          return value.driver_receive === inforDriver.id ? (
+          return value.driver_receive !== inforDriver.id ? (
             <View key={index} style={styles.mess_receive}>
               <Text style={styles.mess_txt}>{value.content}</Text>
               <Text style={styles.mess_time}>

@@ -6,6 +6,7 @@ import {
   ScrollView,
   Image,
   TextInput,
+  Alert,
 } from "react-native";
 // import NavBar from "../../components/NavBar";
 import { colors, text_col } from "../../utils/colors";
@@ -17,38 +18,51 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigation } from "@react-navigation/native";
 import { launchImageLibrary } from "react-native-image-picker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { RadioButton } from "react-native-paper";
 import { Picker } from "@react-native-picker/picker";
+import { useDispatch, useSelector } from "react-redux";
+import { selectInforDriver, setInforDriver } from "~/slices/navSlice";
+import request from "~/src/utils/request";
 
 export default () => {
   const navigation = useNavigation();
-  const [inforImage, setInforImage] = useState();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [checked, setChecked] = useState("Nam");
-  const [selectedValue, setSelectedValue] = useState(1);
+  const dispatch = useDispatch();
 
-  const handleDateChange = (event, date) => {
-    if (date !== undefined) {
-      setSelectedDate(date);
-    }
-    setShowDatePicker(false);
-  };
+  const [inforImage, setInforImage] = useState();
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [edited, setEdited] = useState(false);
+
+  const [username, setUsername] = useState("");
+  const [gender, setGender] = useState("");
+  const [dob, setDob] = useState();
+  const [typeVerhicle, setTypeVerhicle] = useState(null);
+  const [address, setAddress] = useState("");
+  const [numberVerhical, setNumberVerhical] = useState("");
+
+  const inforDriver = useSelector(selectInforDriver);
 
   let options = {
     saveToPhotos: true,
     mediaType: "photo",
   };
 
-  const formattedDate = () => {
-    const day = selectedDate.getDate();
-    const month = selectedDate.getMonth() + 1;
-    const year = selectedDate.getFullYear();
+  const formattedDate = dateOfBirth => {
+    const date = dateOfBirth ? dateOfBirth : new Date();
+    const day = date.getDate();
+    const month = date.getMonth() + 1;
+    const year = date.getFullYear();
     return `${day < 10 ? "0" + day : day}/${
       month < 10 ? "0" + month : month
     }/${year}`;
+  };
+
+  const handleDateChange = (event, date) => {
+    if (date !== undefined) {
+      setDob(date);
+    }
+    setShowDatePicker(false);
   };
 
   const hanldeGetImage = async () => {
@@ -56,6 +70,95 @@ export default () => {
     setInforImage(result.assets[0].uri);
     console.log(result);
   };
+
+  const handleUpdateInfor = async () => {
+    let cnt = 0;
+    if (!username || !typeVerhicle || !numberVerhical) {
+      Alert.alert("Thiếu họ tên, thông tin xe!");
+      return;
+    }
+    const data = {
+      username,
+      gender,
+      address,
+      dob,
+      password: "111111",
+    };
+
+    const inforVer = {
+      licensePlate: numberVerhical,
+      capacity: typeVerhicle,
+    };
+
+    console.log(data);
+    if (
+      (username === inforDriver.username &&
+        gender === inforDriver.gender &&
+        address === inforDriver.address &&
+        dob === inforDriver.dob &&
+        inforVer.licensePlate === inforDriver.licensePlate) ||
+      inforVer.capacity === inforDriver.capacity
+    ) {
+      Alert.alert("Thông tin của bạn không thay đổi.");
+      setEdited(false);
+      return;
+    } else
+      await request
+        .patch("update", data, {
+          headers: { Authorization: "Bearer " + inforDriver.token },
+        })
+        .then(res => {
+          console.log(res.data);
+          dispatch(
+            setInforDriver({
+              ...res.data,
+              token: inforDriver.token,
+              capacity: inforDriver.capacity,
+              licensePlate: inforDriver.licensePlate,
+            })
+          );
+          cnt++;
+        })
+        .catch(err => {
+          console.log(err);
+        });
+
+    if (
+      inforVer.licensePlate !== inforDriver.licensePlate ||
+      inforVer.capacity !== inforDriver.capacity
+    ) {
+      await request
+        .post("register-vehicle", inforVer, {
+          headers: { Authorization: "Bearer " + inforDriver.token },
+        })
+        .then(res => {
+          console.log(res.data);
+          dispatch(
+            setInforDriver({
+              ...inforDriver,
+              capacity: inforVer.capacity,
+              licensePlate: inforVer.licensePlate,
+            })
+          );
+          cnt++;
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    }
+    setEdited(false);
+    Alert.alert("Cập nhật thông tinh thành công!");
+  };
+
+  useEffect(() => {
+    console.log(inforDriver);
+    setDob(new Date(inforDriver.dob));
+    setGender(inforDriver.gender);
+    setUsername(inforDriver.username);
+    setAddress(inforDriver.address);
+    setNumberVerhical(inforDriver.licensePlate);
+    setTypeVerhicle(inforDriver.capacity);
+  }, []);
   return (
     <View style={styles.container}>
       <View style={styles.heading}>
@@ -79,104 +182,251 @@ export default () => {
         </View>
       </View>
       <ScrollView style={styles.content_container}>
-        <View style={styles.image_container}>
-          <View style={styles.image_edit}>
-            <Image
-              style={styles.image_infor}
-              source={require("../../../assets/portrait.png")}
-            />
-            <TouchableOpacity
-              style={styles.image_icon}
-              onPress={hanldeGetImage}
-            >
-              <FontAwesomeIcon
-                icon={faCamera}
-                color={colors.primary_300}
-                size={14}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-        <View style={{ marginTop: 30 }}>
-          <Text>Họ và tên</Text>
-          <TextInput style={styles.name_input} placeholder="Nhập tên của bạn" />
-        </View>
-        <View
-          style={{
-            marginTop: 10,
-            flexDirection: "row",
-            justifyContent: "space-between",
-          }}
-        >
-          <View>
-            <Text>Ngày Sinh</Text>
-            <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              style={styles.date_block}
-            >
+        {edited ? (
+          <>
+            <View style={styles.image_container}>
+              <View style={styles.image_edit}>
+                <Image
+                  style={styles.image_infor}
+                  source={require("~assets/portrait.png")}
+                />
+                <TouchableOpacity
+                  style={styles.image_icon}
+                  onPress={hanldeGetImage}
+                >
+                  <FontAwesomeIcon
+                    icon={faCamera}
+                    color={colors.primary_300}
+                    size={14}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+            <View style={{ marginTop: 30 }}>
+              <Text>Họ và tên</Text>
               <TextInput
-                style={styles.date_input}
-                placeholder="02/10/2002"
-                value={formattedDate()}
-                editable={false}
+                value={username}
+                onChangeText={text => setUsername(text)}
+                style={styles.name_input}
+                placeholder="Nhập tên của bạn"
               />
-              <View style={styles.date_icon}>
-                <FontAwesomeIcon
-                  icon={faCalendarDays}
-                  color="white"
-                  size={24}
+            </View>
+            <View
+              style={{
+                marginTop: 10,
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <View>
+                <Text>Ngày Sinh</Text>
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
+                  style={styles.date_block}
+                >
+                  <TextInput
+                    style={styles.date_input}
+                    placeholder="02/10/2002"
+                    value={formattedDate(dob.getDate() ? dob : new Date())}
+                    editable={false}
+                  />
+                  <View style={styles.date_icon}>
+                    <FontAwesomeIcon
+                      icon={faCalendarDays}
+                      color="white"
+                      size={24}
+                    />
+                  </View>
+                </TouchableOpacity>
+              </View>
+              <View>
+                <Text>Giới Tính</Text>
+                <RadioButton.Group
+                  onValueChange={value => setGender(value)}
+                  value={gender}
+                >
+                  <View style={styles.radioButtonContainer}>
+                    <RadioButton.Item label="Nam" value="Male" />
+                    <RadioButton.Item label="Nữ" value="Female" />
+                  </View>
+                </RadioButton.Group>
+              </View>
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Địa chỉ</Text>
+              <TextInput
+                value={address}
+                onChangeText={text => setAddress(text)}
+                style={styles.name_input}
+                placeholder="Nhập địa chỉ của bạn"
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Biển số xe</Text>
+              <TextInput
+                value={numberVerhical}
+                onChangeText={text => setNumberVerhical(text)}
+                style={styles.name_input}
+                placeholder="Nhập biển số xe của bạn"
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Loại Xe</Text>
+              <Picker
+                selectedValue={typeVerhicle}
+                onValueChange={itemValue => setTypeVerhicle(itemValue)}
+                style={styles.picker}
+              >
+                <Picker.Item label="Chưa có" value={null} />
+                <Picker.Item label="Xe máy" value={1} />
+                <Picker.Item label="Xe hơi 4 chỗ" value={4} />
+                <Picker.Item label="Xe hơi 7 chỗ" value={7} />
+              </Picker>
+            </View>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dob.getDate() ? dob : new Date()}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <View style={styles.image_container}>
+              <View style={styles.image_edit}>
+                <Image
+                  style={styles.image_infor}
+                  source={require("../../../assets/portrait.png")}
                 />
               </View>
-            </TouchableOpacity>
-          </View>
-          <View>
-            <Text>Giới Tính</Text>
-            <RadioButton.Group
-              onValueChange={value => setChecked(value)}
-              value={checked}
+            </View>
+            <View style={{ marginTop: 30 }}>
+              <Text>Số Điện Thoại</Text>
+              <TextInput
+                value={inforDriver.phone}
+                style={[styles.name_input, { color: text_col.color_700 }]}
+                placeholder="Nhập số điện thoại của bạn"
+                editable={false}
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Email</Text>
+              <TextInput
+                value={inforDriver.email}
+                style={[styles.name_input, { color: text_col.color_700 }]}
+                placeholder="Nhập email của bạn"
+                editable={false}
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Họ và tên</Text>
+              <TextInput
+                value={inforDriver.username}
+                style={[styles.name_input, { color: text_col.color_700 }]}
+                placeholder="Nhập tên của bạn"
+                editable={false}
+              />
+            </View>
+            <View
+              style={{
+                marginTop: 10,
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
             >
-              <View style={styles.radioButtonContainer}>
-                <RadioButton.Item label="Nam" value="Nam" />
-                <RadioButton.Item label="Nữ" value="Nữ" />
+              <View>
+                <Text>Ngày Sinh</Text>
+                <View style={styles.date_block}>
+                  <TextInput
+                    style={styles.date_input}
+                    placeholder="02/10/2002"
+                    value={formattedDate(
+                      inforDriver.dob ? new Date(inforDriver.dob) : new Date()
+                    )}
+                    editable={false}
+                  />
+                  <View style={styles.date_icon}>
+                    <FontAwesomeIcon
+                      icon={faCalendarDays}
+                      color="white"
+                      size={24}
+                    />
+                  </View>
+                </View>
               </View>
-            </RadioButton.Group>
-          </View>
-        </View>
-        <View style={{ marginTop: 10 }}>
-          <Text>Số Điện Thoại</Text>
-          <TextInput
-            style={styles.name_input}
-            placeholder="Nhập số điện thoại của bạn"
-          />
-        </View>
-        <View style={{ marginTop: 10 }}>
-          <Text>Loại Xe</Text>
-          <Picker
-            selectedValue={selectedValue}
-            onValueChange={itemValue => setSelectedValue(itemValue)}
-            style={styles.picker}
-          >
-            <Picker.Item label="Xe máy" value={1} />
-            <Picker.Item label="Xe hơi 4 chỗ" value={4} />
-            <Picker.Item label="Xe hơi 7 chỗ" value={7} />
-          </Picker>
-        </View>
-        {showDatePicker && (
-          <DateTimePicker
-            value={selectedDate}
-            mode="date"
-            display="default"
-            onChange={handleDateChange}
-          />
+              <View>
+                <Text>Giới Tính</Text>
+                <RadioButton.Group
+                  onValueChange={value => setGender(value)}
+                  value={inforDriver.gender}
+                >
+                  <View style={styles.radioButtonContainer}>
+                    <RadioButton.Item label="Nam" value="Male" disabled />
+                    <RadioButton.Item label="Nữ" value="Female" disabled />
+                  </View>
+                </RadioButton.Group>
+              </View>
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Địa chỉ</Text>
+              <TextInput
+                value={inforDriver.address}
+                style={[styles.name_input, { color: text_col.color_700 }]}
+                placeholder="Không có"
+                editable={false}
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Biển số xe</Text>
+              <TextInput
+                value={inforDriver.licensePlate}
+                style={[styles.name_input, { color: text_col.color_700 }]}
+                placeholder="Không có"
+                editable={false}
+              />
+            </View>
+            <View style={{ marginTop: 10 }}>
+              <Text>Loại Xe</Text>
+              <Picker
+                selectedValue={inforDriver.capacity}
+                style={styles.picker}
+                enabled={false}
+              >
+                <Picker.Item label="Chưa có" value={null} />
+                <Picker.Item label="Xe máy" value={1} />
+                <Picker.Item label="Xe hơi 4 chỗ" value={4} />
+                <Picker.Item label="Xe hơi 7 chỗ" value={7} />
+              </Picker>
+            </View>
+          </>
         )}
       </ScrollView>
       <View style={styles.btn_container}>
-        <TouchableOpacity style={styles.btn_block_cancel}>
-          <Text style={styles.btn_title_cancel}>Hủy</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.btn_block_save}>
-          <Text style={styles.btn_title_save}>Lưu thay đổi</Text>
-        </TouchableOpacity>
+        {edited ? (
+          <>
+            <TouchableOpacity
+              onPress={() => setEdited(false)}
+              style={styles.btn_block_cancel}
+            >
+              <Text style={styles.btn_title_cancel}>Hủy</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleUpdateInfor}
+              style={styles.btn_block_save}
+            >
+              <Text style={styles.btn_title_save}>Lưu thay đổi</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            onPress={() => setEdited(true)}
+            style={styles.btn_block_save}
+          >
+            <Text style={styles.btn_title_save}>Chỉnh sửa</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

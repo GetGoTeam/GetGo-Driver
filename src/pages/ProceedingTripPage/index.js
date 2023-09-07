@@ -13,11 +13,16 @@ import GoogleMap from "../../components/GoogleMap";
 import { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
-import { selectOrigin, setTripDetails } from "../../../slices/navSlice";
+import {
+  selectOrigin,
+  selectTripDetails,
+  setTripDetails,
+} from "../../../slices/navSlice";
 
 const OrderPage2 = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
+  const tripDetails = useSelector(selectTripDetails);
 
   const [stepTakeCus, setStepTakeCus] = useState(0);
   const [statusHeader, setStatusHeader] = useState(false);
@@ -34,16 +39,9 @@ const OrderPage2 = () => {
   const hanldeViewDetails = () => {
     dispatch(
       setTripDetails({
-        path: "OrderPage2",
-        payment: { price: "50.000", type: "Tiền mặt" },
-        pickUp: "135b Tran Hung Dao, P. Cau Ong Lanh, Quan 1, TP HCM",
-        location: "224 Nguyen Van Cu, Quan 5, TP HCM",
-        feedback: {
-          show: false,
-          content:
-            "Bạn 10 điểm, tôi sẽ đánh giá cho bạn 5 sao. Nhưng lần sau nhớ đẹp zai hơn nhá",
-          star: 5,
-        },
+        ...tripDetails,
+        path: "ProceedingTripPage",
+        showFeedback: false,
       })
     );
 

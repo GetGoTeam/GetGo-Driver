@@ -56,17 +56,37 @@ const SignIn = () => {
     };
     await request
       .post("login", objLogin)
-      .then(res => {
-        const driverInf = jwt(res.data.token); // decode your token here
+      .then(async res1 => {
+        const headers = { Authorization: "Bearer " + res1.data.token };
+        await request
+          .get("get-infor", { headers })
+          .then(async res2 => {
+            console.log(res2.data);
 
-        dispatch(setInforDriver({ ...driverInf, token: res.data.token }));
-
-        console.log(driverInf);
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "HomePage" }],
-        });
-        Alert.alert("Thành công", "Đăng nhập thành công!");
+            await request
+              .get("get-vehicle", {
+                headers,
+              })
+              .then(res3 => {
+                // console.log(res3.data);
+                dispatch(
+                  setInforDriver({
+                    ...res2.data,
+                    token: res1.data.token,
+                    capacity: res3.data.capacity ? res3.data.capacity : null,
+                    licensePlate: res3.data.licensePlate
+                      ? res3.data.licensePlate
+                      : "",
+                  })
+                );
+                navigation.reset({
+                  index: 0,
+                  routes: [{ name: "HomePage" }],
+                });
+                Alert.alert("Thành công", "Đăng nhập thành công!");
+              });
+          })
+          .catch(err => console.log(err));
       })
       .catch(function (error) {
         console.log(error);

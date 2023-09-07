@@ -51,16 +51,12 @@ const NotificationPage = () => {
         <View style={styles.payment}>
           <View>
             <Text style={styles.payment_text1}>VNĐ</Text>
-            <Text style={styles.payment_text2}>
-              {tripDetails.payment.price}
-            </Text>
+            <Text style={styles.payment_text2}>50 ~ 60k</Text>
           </View>
           <View>
             <Text style={styles.payment_text3}>Thanh toán</Text>
             <View style={styles.payment_type}>
-              <Text style={styles.payment_text4}>
-                {tripDetails.payment.type}
-              </Text>
+              <Text style={styles.payment_text4}>Tien Mat</Text>
             </View>
           </View>
         </View>
@@ -78,21 +74,23 @@ const NotificationPage = () => {
             <View style={styles.infor_location}>
               <View style={styles.location_begin}>
                 <Text style={styles.location_text1}>
-                  {tripDetails.pickUp.split(",")[0]}
+                  {tripDetails.address_pickup.split(",")[0]}
                 </Text>
-                <Text style={styles.location_text2}>{tripDetails.pickUp}</Text>
+                <Text style={styles.location_text2}>
+                  {tripDetails.address_pickup}
+                </Text>
               </View>
               <View>
                 <Text style={[styles.location_text1, styles.location_text12]}>
-                  {tripDetails.location.split(",")[0]}
+                  {tripDetails.address_destination.split(",")[0]}
                 </Text>
                 <Text style={styles.location_text2}>
-                  {tripDetails.location}
+                  {tripDetails.address_destination}
                 </Text>
               </View>
             </View>
           </View>
-          {tripDetails.feedback.show && (
+          {tripDetails.showFeedback && (
             <View style={styles.feedback_container}>
               <View style={styles.feedback_title}>
                 <FontAwesomeIcon

@@ -11,8 +11,9 @@ import {
 import HomePage from "./src/pages/HomePage";
 import HistoryPage from "./src/pages/HistoryPage";
 import NotificationPage from "./src/pages/NotificationPage";
+import ReceiveTrip from "./src/pages/ReceiveTrip";
 import ProfilePage from "./src/pages/ProfilePage";
-import OrderPage2 from "./src/pages/OrderPage2";
+import ProceedingTripPage from "./src/pages/ProceedingTripPage";
 import TripDetails from "./src/pages/TripDetails";
 import CompleteTrip from "./src/pages/CompleteTrip";
 import ChattingPage from "./src/pages/ChattingPage";
@@ -43,9 +44,13 @@ export default App = () => {
               name="NotificationPage"
               component={NotificationPage}
             />
+            <Stack.Screen name="ReceiveTrip" component={ReceiveTrip} />
             <Stack.Screen name="HistoryPage" component={HistoryPage} />
             <Stack.Screen name="ProfilePage" component={ProfilePage} />
-            <Stack.Screen name="OrderPage2" component={OrderPage2} />
+            <Stack.Screen
+              name="ProceedingTripPage"
+              component={ProceedingTripPage}
+            />
             <Stack.Screen name="TripDetails" component={TripDetails} />
             <Stack.Screen name="CompleteTrip" component={CompleteTrip} />
             <Stack.Screen name="ChattingPage" component={ChattingPage} />
