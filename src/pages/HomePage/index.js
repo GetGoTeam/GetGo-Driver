@@ -155,11 +155,27 @@ const HomePage = () => {
         )
         .then(res => {
           console.log(res.data);
+          request
+            .patch(
+              "update-location",
+              {
+                latitude: latitudePicked,
+                longitude: longitudePicked,
+              },
+              {
+                headers: {
+                  Authorization: "Bearer " + inforDriver.token,
+                },
+              }
+            )
+            .then(res => console.log(res.data))
+            .catch(err => console.log(err));
         })
         .catch(err => {
           console.log(err);
         })
         .finally(() => setIsLoading(false));
+
       socketServcies.initializeSocket("");
       socketServcies.on(inforDriver._id, msg => {
         console.log(msg.content);

@@ -19,6 +19,7 @@ import {
   selectOrigin,
   selectTripDetails,
   setNotifChat,
+  setOrigin,
   setTripDetails,
 } from "../../../slices/navSlice";
 import request from "~/src/utils/request";
@@ -42,6 +43,7 @@ const ProceedingTripPage = () => {
   const handleOrderStep = () => {
     if (stepTakeCus === 0) {
       setIsLoading(true);
+      // dispatch(setOrigin({latitude: tripDetails., longitude:0}))
       request
         .patch("update-trip-status", {
           id: tripDetails._id,
