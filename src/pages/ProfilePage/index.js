@@ -26,8 +26,8 @@ const ProfilePage = () => {
   const inforDriver = useSelector(selectInforDriver);
 
   const handleSignout = () => {
-    dispatch(setInforDriver(null));
     navigation.navigate("SignIn");
+    dispatch(setInforDriver(null));
   };
 
   return (

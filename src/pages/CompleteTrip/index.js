@@ -19,7 +19,7 @@ export default () => {
       <View style={styles.container_heading}>
         <TouchableOpacity
           onPress={() => {
-            navigation.navigate("OrderPage2");
+            navigation.navigate("ProceedingTripPage");
           }}
         >
           <FontAwesomeIcon

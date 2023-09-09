@@ -10,26 +10,83 @@ import {
   faToggleOn,
 } from "@fortawesome/free-solid-svg-icons";
 import GoogleMap from "../../components/GoogleMap";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  selectInforDriver,
+  selectNotifChat,
   selectOrigin,
   selectTripDetails,
+  setNotifChat,
   setTripDetails,
 } from "../../../slices/navSlice";
+import request from "~/src/utils/request";
+import Loading from "~/src/components/Loading";
+import socketServcies from "~/src/utils/websocketContext";
 
-const OrderPage2 = () => {
+const ProceedingTripPage = () => {
   const navigation = useNavigation();
   const dispatch = useDispatch();
   const tripDetails = useSelector(selectTripDetails);
+  const inforDriver = useSelector(selectInforDriver);
+  const notifChat = useSelector(selectNotifChat);
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [cntChat, setCntChat] = useState(0);
   const [stepTakeCus, setStepTakeCus] = useState(0);
   const [statusHeader, setStatusHeader] = useState(false);
   const statusTakeCus = ["Đón khách", "Khách xuống xe", "Hoàn thành đơn"];
 
   const handleOrderStep = () => {
-    if (stepTakeCus === 2) navigation.navigate("CompleteTrip");
+    if (stepTakeCus === 0) {
+      setIsLoading(true);
+      request
+        .patch("update-trip-status", {
+          id: tripDetails._id,
+          status: "Arriving",
+        })
+        .then(res => {
+          console.log(res.data);
+        })
+        .catch(err => console.log(err))
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+
+    if (stepTakeCus === 1) {
+      setIsLoading(true);
+      request
+        .patch("update-trip-status", {
+          id: tripDetails._id,
+          status: "Arrived",
+        })
+        .then(res => {
+          console.log(res.data);
+        })
+        .catch(err => console.log(err))
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+
+    if (stepTakeCus === 2) {
+      request
+        .delete(
+          `delete-both-messages-driver-customer/${tripDetails.customer}`,
+          {
+            headers: {
+              Authorization: "Bearer " + inforDriver.token,
+            },
+          }
+        )
+        .then(res => console.log(res.data))
+        .catch(err => console.log(err));
+      socketServcies.disconnectSocket();
+      navigation.navigate("CompleteTrip");
+    }
     if (stepTakeCus < 2) {
       setStepTakeCus(stepTakeCus + 1);
     }
@@ -48,8 +105,32 @@ const OrderPage2 = () => {
     navigation.navigate("TripDetails");
   };
 
+  useEffect(() => {
+    try {
+      socketServcies.initializeSocket("chatting");
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    console.log(`message_${tripDetails.customer}_${inforDriver._id}`);
+    try {
+      socketServcies.on(
+        `message_${tripDetails.customer}_${inforDriver._id}`,
+        msg => {
+          if (notifChat) setCntChat(cntChat => cntChat + 1);
+          console.log(cntChat, notifChat);
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
   return (
     <View style={styles.container}>
+      <Loading loading={isLoading} />
       <View style={styles.heading}>
         <View style={styles.heading_nav}>
           <View>
@@ -74,7 +155,9 @@ const OrderPage2 = () => {
         <View style={styles.heading_title}>
           <View style={styles.text_block}>
             <Text style={styles.title_text}>
-              224 Nguyễn Văn Cừ, Q.5, TP HCM
+              {stepTakeCus === 0
+                ? tripDetails.address_pickup
+                : tripDetails.address_destination}
             </Text>
             <View style={styles.title_fee}>
               <Text style={styles.title_text}>GoDriver</Text>
@@ -109,9 +192,20 @@ const OrderPage2 = () => {
           </View>
           <TouchableOpacity
             style={[styles.block_item, styles.block_item_center]}
-            onPress={() => navigation.navigate("ChattingPage")}
+            onPress={() => {
+              dispatch(setNotifChat(false));
+              setCntChat(0);
+              navigation.navigate("ChattingPage");
+            }}
           >
-            <FontAwesomeIcon icon={faCommentDots} size={32} color="white" />
+            <View style={{ position: "relative" }}>
+              <FontAwesomeIcon icon={faCommentDots} size={32} color="white" />
+              {cntChat !== 0 ? (
+                <Text style={styles.number_chat}>{cntChat}</Text>
+              ) : (
+                <></>
+              )}
+            </View>
             <Text style={styles.item_text}>Nhắn tin</Text>
           </TouchableOpacity>
           <View style={styles.block_item}>
@@ -305,6 +399,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  number_chat: {
+    position: "absolute",
+    right: -10,
+    top: -6,
+    backgroundColor: "#FF0000",
+    color: "white",
+    borderRadius: 30,
+    paddingHorizontal: 5,
+    paddingVertical: 0,
+    fontSize: 11,
+    fontWeight: 600,
+  },
   main_text: {
     fontSize: 18,
     fontWeight: 500,
@@ -321,4 +427,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrderPage2;
+export default ProceedingTripPage;

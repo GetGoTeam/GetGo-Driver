@@ -17,12 +17,17 @@ import {
 import { colors, text_col } from "../../utils/colors";
 import { useNavigation } from "@react-navigation/native";
 import socketServcies from "~/src/utils/websocketContext";
-import { useSelector } from "react-redux";
-import { selectInforDriver, selectTripDetails } from "~/slices/navSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectInforDriver,
+  selectTripDetails,
+  setNotifChat,
+} from "~/slices/navSlice";
 import request from "~/src/utils/request";
 
 export default () => {
   const scrollViewRef = useRef(null);
+  const dispatch = useDispatch();
 
   const navigation = useNavigation();
   const [chatBuffers, setChatBuffers] = useState([]);
@@ -66,14 +71,6 @@ export default () => {
 
   useEffect(() => {
     try {
-      socketServcies.initializeSocket("chatting");
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
       socketServcies.on(
         `message_${tripDetails.customer}_${inforDriver._id}`,
         msg => {
@@ -112,7 +109,7 @@ export default () => {
         <View style={styles.heading_left}>
           <TouchableOpacity
             onPress={() => {
-              socketServcies.disconnectSocket();
+              dispatch(setNotifChat(true));
               navigation.navigate("ProceedingTripPage");
             }}
           >

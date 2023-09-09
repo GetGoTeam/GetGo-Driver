@@ -13,11 +13,18 @@ import { faCircleInfo, faLocationDot } from "@fortawesome/free-solid-svg-icons";
 import { faCircleDot } from "@fortawesome/free-regular-svg-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useState, useRef, useEffect } from "react";
-import { useSelector } from "react-redux";
-import { selectInforDriver, selectTripDetails } from "~/slices/navSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectInforDriver,
+  selectTripDetails,
+  setDestination,
+  setOrigin,
+} from "~/slices/navSlice";
 import request from "~/src/utils/request";
+import Loading from "~/src/components/Loading";
 
 const ReceiveTrip = () => {
+  const dispatch = useDispatch();
   const navigation = useNavigation();
   const [count, setCount] = useState(10);
   const intervalRef = useRef(null);
@@ -26,8 +33,11 @@ const ReceiveTrip = () => {
   const tripDetails = useSelector(selectTripDetails);
   const inforDriver = useSelector(selectInforDriver);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleAcceptTrip = async () => {
-    request
+    setIsLoading(true);
+    await request
       .post("accept", tripDetails, {
         Headers: {
           Authorization: "Bearer " + inforDriver.token,
@@ -35,12 +45,22 @@ const ReceiveTrip = () => {
       })
       .then(res => {
         console.log(res.data);
+        dispatch(
+          setDestination({
+            latitude: tripDetails.lat_pickup,
+            longitude: tripDetails.long_pickup,
+            address: tripDetails.address_pickup,
+          })
+        );
+        navigation.navigate("ProceedingTripPage");
       })
       .catch(err => {
         console.log(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
     clearInterval(intervalRef.current);
-    navigation.navigate("ProceedingTripPage");
   };
 
   useEffect(() => {
@@ -86,6 +106,7 @@ const ReceiveTrip = () => {
 
   return (
     <View style={styles.container}>
+      <Loading loading={isLoading} />
       <View style={styles.heading}>
         <View style={styles.heading_title}>
           <View>

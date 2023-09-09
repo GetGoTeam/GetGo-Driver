@@ -86,13 +86,16 @@ const SignIn = () => {
                 Alert.alert("Thành công", "Đăng nhập thành công!");
               });
           })
-          .catch(err => console.log(err));
+          .catch(err => console.log(err))
+          .finally(() => {
+            setLoading(false);
+          });
       })
       .catch(function (error) {
         console.log(error);
         Alert.alert("Lỗi", "Số điện thoại hoặc mật khẩu không chính xác.");
       })
-      .then(function () {
+      .finally(() => {
         setLoading(false);
       });
   };

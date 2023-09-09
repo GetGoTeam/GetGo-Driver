@@ -33,6 +33,7 @@ import axios from "axios";
 import Loading from "~/src/components/Loading";
 import { useNavigation } from "@react-navigation/native";
 import socketServcies from "~/src/utils/websocketContext";
+import request from "~/src/utils/request";
 
 const HomePage = () => {
   const [openIncome, setOpenIncome] = useState(false);
@@ -40,6 +41,7 @@ const HomePage = () => {
 
   const [latitudePicked, setLatitudePicked] = useState(0);
   const [longitudePicked, setLongitudePicked] = useState(0);
+  const [currentPosition, setCurrentPosition] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -101,10 +103,11 @@ const HomePage = () => {
       setLongitudePicked(location.coords.longitude);
 
       // Chuyển đổi vị trí hiện tại thành địa chỉ
-      // const address = await getPlaceFromCoordinates(
-      //   location.coords.latitude,
-      //   location.coords.longitude
-      // );
+      const address = await getPlaceFromCoordinates(
+        location.coords.latitude,
+        location.coords.longitude
+      );
+      setCurrentPosition(address);
     } catch (error) {
       console.error("Lỗi khi lấy vị trí:", error);
     }
@@ -112,13 +115,54 @@ const HomePage = () => {
   };
 
   useEffect(() => {
+    setIsLoading(true);
     if (offline) {
       if (socketServcies.connected) socketServcies.disconnectSocket();
       console.log(socketServcies.connected);
+      request
+        .patch(
+          "update-status",
+          {
+            id: inforDriver._id,
+            status: "Inactive",
+          },
+          {
+            headers: {
+              Authorization: "Bearer " + inforDriver.token,
+            },
+          }
+        )
+        .then(res => {
+          console.log(res.data);
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => setIsLoading(false));
     } else {
+      request
+        .patch(
+          "update-status",
+          {
+            id: inforDriver._id,
+            status: "Active",
+          },
+          {
+            headers: {
+              Authorization: "Bearer " + inforDriver.token,
+            },
+          }
+        )
+        .then(res => {
+          console.log(res.data);
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => setIsLoading(false));
       socketServcies.initializeSocket("");
       socketServcies.on(inforDriver._id, msg => {
-        console.log(msg);
+        console.log(msg.content);
         dispatch(setTripDetails(msg.content));
         navigation.navigate("ReceiveTrip");
         socketServcies.disconnectSocket();
@@ -132,9 +176,13 @@ const HomePage = () => {
 
   useEffect(() => {
     dispatch(
-      setOrigin({ latitude: latitudePicked, longitude: longitudePicked })
+      setOrigin({
+        latitude: latitudePicked,
+        longitude: longitudePicked,
+        address: currentPosition,
+      })
     );
-  }, [latitudePicked, longitudePicked]);
+  }, [latitudePicked, longitudePicked, currentPosition]);
 
   return isLoading ? (
     <SafeAreaView style={{ flex: 1, position: "relative" }}>

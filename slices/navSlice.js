@@ -6,6 +6,7 @@ const initialState = {
   travelTimeInfomation: null,
   tripDetails: null,
   inforDriver: null,
+  notifChat: true,
 };
 
 export const navSlice = createSlice({
@@ -27,6 +28,9 @@ export const navSlice = createSlice({
     setInforDriver: (state, action) => {
       state.inforDriver = action.payload;
     },
+    setNotifChat: (state, action) => {
+      state.notifChat = action.payload;
+    },
   },
 });
 
@@ -36,6 +40,7 @@ export const {
   setTravelTimeInfomation,
   setTripDetails,
   setInforDriver,
+  setNotifChat,
 } = navSlice.actions;
 
 // Selectors
@@ -45,5 +50,6 @@ export const selectTravelTimeInfomation = state =>
   state.nav.travelTimeInfomation;
 export const selectTripDetails = state => state.nav.tripDetails;
 export const selectInforDriver = state => state.nav.inforDriver;
+export const selectNotifChat = state => state.nav.notifChat;
 
 export default navSlice.reducer;

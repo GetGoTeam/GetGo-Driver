@@ -1,7 +1,11 @@
 import { View } from "react-native";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { useSelector } from "react-redux";
-import { selectOrigin, selectDestination } from "../../../slices/navSlice";
+import {
+  selectOrigin,
+  selectDestination,
+  selectTripDetails,
+} from "~/slices/navSlice";
 import { GOONG_MAPS_APIKEY } from "@env";
 import React, { useEffect, useRef, useState } from "react";
 import { colors } from "../../utils/colors";
@@ -13,6 +17,7 @@ const GoogleMap = props => {
 
   const origin = useSelector(selectOrigin);
   const destination = useSelector(selectDestination);
+  const tripDetails = useSelector(selectTripDetails);
   // const [destination, setDestination] = useState({
   //   latitude: 10.8231,
   //   longitude: 106.6297,
@@ -32,6 +37,7 @@ const GoogleMap = props => {
   };
 
   useEffect(() => {
+    console.log(origin, destination);
     if (origin) {
       setCurrentRegion({
         latitude: origin.latitude,
@@ -41,9 +47,24 @@ const GoogleMap = props => {
       });
 
       if (destination) {
+        // console.log(
+        //   `https://rsapi.goong.io/Direction?origin=${origin.latitude},${
+        //     origin.longitude
+        //   }&destination=${destination.latitude},${
+        //     destination.longitude
+        //   }&vehicle=${
+        //     tripDetails.vehicleType > 1 ? "car" : "bike"
+        //   }&api_key=${GOONG_MAPS_APIKEY}`
+        // );
         axios
           .get(
-            `https://rsapi.goong.io/Direction?origin=${origin.latitude},${origin.longitude}&destination=${destination.latitude},${destination.longitude}&vehicle=car&api_key=${GOONG_MAPS_APIKEY}`
+            `https://rsapi.goong.io/Direction?origin=${origin.latitude},${
+              origin.longitude
+            }&destination=${destination.latitude},${
+              destination.longitude
+            }&vehicle=${
+              tripDetails.vehicleType > 1 ? "car" : "bike"
+            }&api_key=${GOONG_MAPS_APIKEY}`
           )
           .then(response => {
             const polyline = decode(
@@ -57,7 +78,7 @@ const GoogleMap = props => {
             setDirectionsData(polyline);
             handleFitMakers();
 
-            console.log(polyline);
+            // console.log(polyline);
           })
           .catch(error => {
             console.error("Error fetching directions:", error);
@@ -83,11 +104,15 @@ const GoogleMap = props => {
         />
       )}
       {origin && (
-        <Marker title="Điểm đón" coordinate={origin} identifier="origin" />
+        <Marker
+          title={origin.address}
+          coordinate={origin}
+          identifier="origin"
+        />
       )}
       {destination && (
         <Marker
-          title="Điểm đến"
+          title={destination.address}
           coordinate={destination}
           identifier="destination"
         />
