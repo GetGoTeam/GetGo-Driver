@@ -28,6 +28,8 @@ const SignIn = () => {
   const [password, setPassword] = useState();
 
   useEffect(() => {
+    dispatch(setInforDriver(null));
+
     const keyboardDidShowListener = Keyboard.addListener(
       "keyboardDidShow",
       () => {
@@ -61,14 +63,22 @@ const SignIn = () => {
         await request
           .get("get-infor", { headers })
           .then(async res2 => {
-            console.log(res2.data);
+            // console.log(res2.data);
 
             await request
               .get("get-vehicle", {
                 headers,
               })
               .then(res3 => {
-                // console.log(res3.data);
+                console.log({
+                  ...res2.data,
+                  token: res1.data.token,
+                  capacity: res3.data.capacity ? res3.data.capacity : null,
+                  licensePlate: res3.data.licensePlate
+                    ? res3.data.licensePlate
+                    : "",
+                });
+                5;
                 dispatch(
                   setInforDriver({
                     ...res2.data,

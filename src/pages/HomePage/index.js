@@ -44,6 +44,7 @@ const HomePage = () => {
   const [currentPosition, setCurrentPosition] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isFirstTime, setIsFirstTime] = useState(true);
 
   const navigation = useNavigation();
 
@@ -63,23 +64,21 @@ const HomePage = () => {
 
   const getPlaceFromCoordinates = async (latitude, longitude) => {
     const url = `https://rsapi.goong.io/Geocode?latlng=${latitude},%20${longitude}&api_key=${GOONG_MAPS_APIKEY}`;
-
+    // setIsLoading(true);
     try {
       const response = await axios.get(url);
       if (response.data.results.length > 0) {
-        setIsLoading(false);
-
         return response.data.results[0].formatted_address;
       } else {
         console.log("error:" + response.data.error_message);
-        setIsLoading(false);
 
         return null;
       }
     } catch (error) {
       console.error("Error getting place from coordinates:", error);
-      setIsLoading(false);
-      return "Error";
+      return getPlaceFromCoordinates(latitude, longitude);
+    } finally {
+      // setIsLoading(false);
     }
   };
 
@@ -102,6 +101,22 @@ const HomePage = () => {
       setLatitudePicked(location.coords.latitude);
       setLongitudePicked(location.coords.longitude);
 
+      await request
+        .patch(
+          "update-location",
+          {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          },
+          {
+            headers: {
+              Authorization: "Bearer " + inforDriver.token,
+            },
+          }
+        )
+        // .then(res => console.log(res.data))
+        .catch(err => console.log(err));
+
       // Chuyển đổi vị trí hiện tại thành địa chỉ
       const address = await getPlaceFromCoordinates(
         location.coords.latitude,
@@ -110,15 +125,16 @@ const HomePage = () => {
       setCurrentPosition(address);
     } catch (error) {
       console.error("Lỗi khi lấy vị trí:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
     setIsLoading(true);
     if (offline) {
       if (socketServcies.connected) socketServcies.disconnectSocket();
-      console.log(socketServcies.connected);
+      // console.log(socketServcies.connected);
       request
         .patch(
           "update-status",
@@ -133,7 +149,7 @@ const HomePage = () => {
           }
         )
         .then(res => {
-          console.log(res.data);
+          // console.log(res.data);
         })
         .catch(err => {
           console.log(err);
@@ -155,30 +171,31 @@ const HomePage = () => {
         )
         .then(res => {
           console.log(res.data);
-          request
-            .patch(
-              "update-location",
-              {
-                latitude: latitudePicked,
-                longitude: longitudePicked,
-              },
-              {
-                headers: {
-                  Authorization: "Bearer " + inforDriver.token,
-                },
-              }
-            )
-            .then(res => console.log(res.data))
-            .catch(err => console.log(err));
         })
         .catch(err => {
           console.log(err);
         })
-        .finally(() => setIsLoading(false));
+        .finally(() => {
+          setIsLoading(false);
+          if (
+            !isLoading &&
+            latitudePicked &&
+            longitudePicked &&
+            currentPosition
+          )
+            dispatch(
+              setOrigin({
+                latitude: latitudePicked,
+                longitude: longitudePicked,
+                address: currentPosition,
+              })
+            );
+        });
 
       socketServcies.initializeSocket("");
       socketServcies.on(inforDriver._id, msg => {
         console.log(msg.content);
+        setOffline(true);
         dispatch(setTripDetails(msg.content));
         navigation.navigate("ReceiveTrip");
         socketServcies.disconnectSocket();
@@ -187,19 +204,32 @@ const HomePage = () => {
   }, [offline]);
 
   useEffect(() => {
-    getLocationCurrent();
+    if (!isLoading && latitudePicked && longitudePicked && currentPosition)
+      dispatch(
+        setOrigin({
+          latitude: latitudePicked,
+          longitude: longitudePicked,
+          address: currentPosition,
+        })
+      );
+  }, [latitudePicked, longitudePicked, currentPosition]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      getLocationCurrent();
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, []);
 
   useEffect(() => {
-    dispatch(
-      setOrigin({
-        latitude: latitudePicked,
-        longitude: longitudePicked,
-        address: currentPosition,
-      })
-    );
-  }, [latitudePicked, longitudePicked, currentPosition]);
-
+    if (isFirstTime) {
+      getLocationCurrent();
+      setIsFirstTime(false);
+    }
+  }, []);
   return isLoading ? (
     <SafeAreaView style={{ flex: 1, position: "relative" }}>
       <Loading loading={isLoading} />

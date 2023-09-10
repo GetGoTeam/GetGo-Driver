@@ -18,6 +18,7 @@ import {
   selectNotifChat,
   selectOrigin,
   selectTripDetails,
+  setDestination,
   setNotifChat,
   setOrigin,
   setTripDetails,
@@ -31,8 +32,8 @@ const ProceedingTripPage = () => {
   const dispatch = useDispatch();
   const tripDetails = useSelector(selectTripDetails);
   const inforDriver = useSelector(selectInforDriver);
-  const notifChat = useSelector(selectNotifChat);
 
+  const [toggleFitSupplied, setToggleFitSupplied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [cntChat, setCntChat] = useState(0);
@@ -43,35 +44,42 @@ const ProceedingTripPage = () => {
   const handleOrderStep = () => {
     if (stepTakeCus === 0) {
       setIsLoading(true);
-      // dispatch(setOrigin({latitude: tripDetails., longitude:0}))
-      request
-        .patch("update-trip-status", {
-          id: tripDetails._id,
-          status: "Arriving",
+      dispatch(
+        setDestination({
+          latitude: tripDetails.lat_destination,
+          longitude: tripDetails.long_destination,
         })
-        .then(res => {
-          console.log(res.data);
-        })
-        .catch(err => console.log(err))
-        .finally(() => {
-          setIsLoading(false);
-        });
+      );
+      async () =>
+        await request
+          .patch("update-trip-status", {
+            id: tripDetails._id,
+            status: "Arriving",
+          })
+          .then(res => {
+            console.log(res.data);
+          })
+          .catch(err => console.log(err))
+          .finally(() => {
+            setIsLoading(false);
+          })();
     }
 
     if (stepTakeCus === 1) {
       setIsLoading(true);
-      request
-        .patch("update-trip-status", {
-          id: tripDetails._id,
-          status: "Arrived",
-        })
-        .then(res => {
-          console.log(res.data);
-        })
-        .catch(err => console.log(err))
-        .finally(() => {
-          setIsLoading(false);
-        });
+      async () =>
+        await request
+          .patch("update-trip-status", {
+            id: tripDetails._id,
+            status: "Arrived",
+          })
+          .then(res => {
+            console.log(res.data);
+          })
+          .catch(err => console.log(err))
+          .finally(() => {
+            setIsLoading(false);
+          })();
     }
 
     if (stepTakeCus === 2) {
@@ -86,13 +94,28 @@ const ProceedingTripPage = () => {
         )
         .then(res => console.log(res.data))
         .catch(err => console.log(err));
-      socketServcies.disconnectSocket();
+      // socketServcies.disconnectSocket();
       navigation.navigate("CompleteTrip");
     }
     if (stepTakeCus < 2) {
       setStepTakeCus(stepTakeCus + 1);
     }
     setStatusHeader(stepTakeCus > 0);
+  };
+
+  const formatCurrencyVND = numberString => {
+    const integerNumber = parseInt(numberString);
+    if (isNaN(integerNumber)) {
+      return "Invalid number";
+    }
+
+    // Định dạng số nguyên thành tiền VND
+    const formattedNumber = integerNumber.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+
+    return formattedNumber;
   };
 
   const hanldeViewDetails = () => {
@@ -107,32 +130,32 @@ const ProceedingTripPage = () => {
     navigation.navigate("TripDetails");
   };
 
-  useEffect(() => {
-    try {
-      socketServcies.initializeSocket("chatting");
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+  // useEffect(() => {
+  //   try {
+  //     socketServcies.initializeSocket("chatting");
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    console.log(`message_${tripDetails.customer}_${inforDriver._id}`);
-    try {
-      socketServcies.on(
-        `message_${tripDetails.customer}_${inforDriver._id}`,
-        msg => {
-          if (notifChat) setCntChat(cntChat => cntChat + 1);
-          console.log(cntChat, notifChat);
-        }
-      );
-    } catch (error) {
-      console.log(error);
-    }
-  }, []);
+  // useEffect(() => {
+  //   console.log(`message_${tripDetails.customer}_${inforDriver._id}`);
+  //   try {
+  //     socketServcies.on(
+  //       `message_${tripDetails.customer}_${inforDriver._id}`,
+  //       msg => {
+  //         if (notifChat) setCntChat(cntChat => cntChat + 1);
+  //         console.log(cntChat, notifChat);
+  //       }
+  //     );
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }, []);
 
   return (
     <View style={styles.container}>
-      <Loading loading={isLoading} />
+      {isLoading && <Loading loading={isLoading} />}
       <View style={styles.heading}>
         <View style={styles.heading_nav}>
           <View>
@@ -162,14 +185,25 @@ const ProceedingTripPage = () => {
                 : tripDetails.address_destination}
             </Text>
             <View style={styles.title_fee}>
-              <Text style={styles.title_text}>GoDriver</Text>
+              <Text style={(styles.title_text, { paddingEnd: 10 })}>
+                GoDriver
+              </Text>
               <FontAwesomeIcon icon={faCircle} size={7} color="#1D1D1D" />
-              <Text style={[styles.title_text, styles.money]}>
-                VND 50.000 - 60.000
+              <Text
+                style={[styles.title_text, { paddingStart: 10 }, styles.money]}
+              >
+                {formatCurrencyVND(
+                  (tripDetails.price - tripDetails.surcharge) * 0.7 +
+                    tripDetails.surcharge
+                )}
               </Text>
             </View>
           </View>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              setToggleFitSupplied(toggleFitSupplied => !toggleFitSupplied)
+            }
+          >
             <View style={styles.title_location}>
               <FontAwesomeIcon
                 icon={faLocationCrosshairs}
@@ -184,7 +218,7 @@ const ProceedingTripPage = () => {
         </View>
       </View>
       <View style={styles.google_map}>
-        <GoogleMap />
+        <GoogleMap resetSupplied={toggleFitSupplied} />
       </View>
       <View style={styles.btn}>
         <View style={styles.btn_block}>
@@ -219,22 +253,21 @@ const ProceedingTripPage = () => {
         </View>
         <View style={styles.btn_follow}>
           <View style={styles.follow_block}>
-            <TouchableOpacity onPress={handleOrderStep}>
-              <View
+            <TouchableOpacity
+              onPress={handleOrderStep}
+              style={[
+                styles.block_main,
+                styles[stepTakeCus > 0 ? "color_bg_green" : ""],
+              ]}
+            >
+              <Text
                 style={[
-                  styles.block_main,
-                  styles[stepTakeCus > 0 ? "color_bg_green" : ""],
+                  styles.main_text,
+                  styles[stepTakeCus > 0 ? "color_white" : ""],
                 ]}
               >
-                <Text
-                  style={[
-                    styles.main_text,
-                    styles[stepTakeCus > 0 ? "color_white" : ""],
-                  ]}
-                >
-                  {statusTakeCus.at(stepTakeCus)}
-                </Text>
-              </View>
+                {statusTakeCus.at(stepTakeCus)}
+              </Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity
@@ -254,6 +287,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
+    flexDirection: "column", // Xếp các component theo chiều dọc
+    justifyContent: "space-between", // Các component sẽ căn cứ theo chiều dọc và cách đều nhau
   },
   block_nav_status: {
     width: "100%",
@@ -309,10 +344,10 @@ const styles = StyleSheet.create({
     width: "75%",
   },
   title_fee: {
-    width: 240,
+    // width: "100%",
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    // justifyContent: "space-between",
   },
   title_text: {
     fontSize: 15,
@@ -338,7 +373,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   google_map: {
-    height: 480,
+    flex: 1,
     width: "100%",
   },
   btn: {
@@ -394,8 +429,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   block_main: {
-    height: 80,
-    width: 260,
+    height: "80%",
+    width: "95%",
     backgroundColor: "white",
     borderRadius: 5,
     justifyContent: "center",

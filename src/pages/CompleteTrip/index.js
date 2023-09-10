@@ -10,57 +10,98 @@ import { useNavigation } from "@react-navigation/native";
 import { colors, text_col } from "../../utils/colors";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectTripDetails,
+  setDestination,
+  setTripDetails,
+} from "~/slices/navSlice";
 
 export default () => {
   const navigation = useNavigation();
+  const tripDetails = useSelector(selectTripDetails);
+  const dispatch = useDispatch();
 
+  const formatCurrencyVND = numberString => {
+    const integerNumber = parseInt(numberString);
+    if (isNaN(integerNumber)) {
+      return "Invalid number";
+    }
+
+    // Định dạng số nguyên thành tiền VND
+    const formattedNumber = integerNumber.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+
+    return formattedNumber;
+  };
+
+  const handleAcceptPrice = () => {
+    dispatch(setTripDetails(null));
+    dispatch(setDestination(null));
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "HomePage" }],
+    });
+  };
   return (
-    <View style={styles.container}>
-      <View style={styles.container_heading}>
-        <TouchableOpacity
-          onPress={() => {
-            navigation.navigate("ProceedingTripPage");
-          }}
-        >
-          <FontAwesomeIcon
-            style={styles.ic_back}
-            icon={faArrowLeft}
-            size={28}
-            color="white"
-          />
-        </TouchableOpacity>
-        <Text style={styles.heading_txt}>Thanh toán cho Bảo Long</Text>
+    tripDetails && (
+      <View style={styles.container}>
+        <View style={styles.container_heading}>
+          <TouchableOpacity
+            onPress={() => {
+              navigation.navigate("ProceedingTripPage");
+            }}
+          >
+            <FontAwesomeIcon
+              style={styles.ic_back}
+              icon={faArrowLeft}
+              size={28}
+              color="white"
+            />
+          </TouchableOpacity>
+          <Text style={styles.heading_txt}>Thanh toán cho Bảo Long</Text>
+        </View>
+        <View style={styles.heading_money}>
+          <View style={styles.money_number}>
+            <Text style={styles.money_cost}>
+              {formatCurrencyVND(tripDetails.price)}
+            </Text>
+          </View>
+          <Text style={styles.payment}>Thu Tiền Mặt</Text>
+        </View>
+        <View style={styles.container_details}>
+          <View style={styles.item_details}>
+            <Text style={styles.item_txt}>Giá cố định</Text>
+            <Text style={styles.item_txt}>
+              {formatCurrencyVND(tripDetails.price - tripDetails.surcharge)}
+            </Text>
+          </View>
+          <View style={styles.item_details}>
+            <Text style={styles.item_txt}>Phụ phí</Text>
+            <Text style={styles.item_txt}>
+              {formatCurrencyVND(tripDetails.surcharge)}
+            </Text>
+          </View>
+          <View style={styles.item_details}>
+            <Text style={styles.item_txt}>Phí nhận được</Text>
+            <Text style={styles.item_txt}>
+              {formatCurrencyVND(
+                (tripDetails.price - tripDetails.surcharge) * 0.7 +
+                  tripDetails.surcharge
+              )}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.btn_container}
+            onPress={handleAcceptPrice}
+          >
+            <Text style={styles.btn_txt}>Xác nhận thu phí</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <View style={styles.heading_money}>
-        <View style={styles.money_number}>
-          <Text style={styles.money_symbol}>₫</Text>
-          <Text style={styles.money_cost}>100.000</Text>
-        </View>
-        <Text style={styles.payment}>Thu Tiền Mặt</Text>
-      </View>
-      <View style={styles.container_details}>
-        <View style={styles.item_details}>
-          <Text style={styles.item_txt}>Giá cố định</Text>
-          <Text style={styles.item_txt}>90.000</Text>
-        </View>
-        <View style={styles.item_details}>
-          <Text style={styles.item_txt}>Phí đăng kí của khách</Text>
-          <Text style={styles.item_txt}>7.000</Text>
-        </View>
-        <View style={styles.item_details}>
-          <Text style={styles.item_txt}>Phí tiềm năng</Text>
-          <Text style={styles.item_txt}>3.000</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.btn_container}
-          onPress={() => {
-            navigation.navigate("HomePage");
-          }}
-        >
-          <Text style={styles.btn_txt}>Xác nhận thu phí</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    )
   );
 };
 
@@ -91,12 +132,7 @@ const styles = StyleSheet.create({
   money_number: {
     flexDirection: "row",
   },
-  money_symbol: {
-    color: "white",
-    fontWeight: 600,
-    fontSize: 16,
-    marginRight: 2,
-  },
+
   money_cost: {
     color: "white",
     fontSize: 28,

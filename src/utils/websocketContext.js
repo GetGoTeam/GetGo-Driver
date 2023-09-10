@@ -1,7 +1,8 @@
 import io from "socket.io-client";
+import { baseURL } from "./request";
 
-const SOCKET_URL_MESSAGE = "http://192.168.1.20:3003";
-const SOCKET_URL_TRIP = "http://192.168.1.20:3014";
+const SOCKET_URL_MESSAGE = `${baseURL}:3003`;
+const SOCKET_URL_TRIP = `${baseURL}:3014`;
 
 class WSService {
   constructor() {
@@ -15,11 +16,12 @@ class WSService {
           transports: ["websocket"],
         }
       );
-      console.log("initializing socket", this.socket);
+      // console.log("initializing socket", this.socket);
 
       this.socket.on("connect", data => {
         console.log("=== socket connected ====");
         this.connected = true; // Socket đã kết nối
+        console.log(key);
       });
 
       this.socket.on("disconnect", data => {

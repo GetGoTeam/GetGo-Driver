@@ -17,17 +17,19 @@ import {
   faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigation } from "@react-navigation/native";
-import { selectInforDriver, setInforDriver } from "~/slices/navSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { selectInforDriver } from "~/slices/navSlice";
+import { useSelector } from "react-redux";
 
 const ProfilePage = () => {
   const navigation = useNavigation();
-  const dispatch = useDispatch();
+
   const inforDriver = useSelector(selectInforDriver);
 
   const handleSignout = () => {
-    navigation.navigate("SignIn");
-    dispatch(setInforDriver(null));
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "SignIn" }],
+    });
   };
 
   return (
@@ -63,13 +65,15 @@ const ProfilePage = () => {
             style={styles.infor_img}
             source={require("../../../assets/portrait.png")}
           />
-          <View style={styles.infor_title}>
-            <Text style={styles.title_name}>{inforDriver.username}</Text>
-            <View style={styles.title_star}>
-              <FontAwesomeIcon icon={faStar} color="#FFA902" />
-              <Text style={styles.star_number}>{inforDriver.rated}</Text>
+          {inforDriver && (
+            <View style={styles.infor_title}>
+              <Text style={styles.title_name}>{inforDriver.username}</Text>
+              <View style={styles.title_star}>
+                <FontAwesomeIcon icon={faStar} color="#FFA902" />
+                <Text style={styles.star_number}>{inforDriver.rated}</Text>
+              </View>
             </View>
-          </View>
+          )}
         </View>
         <FontAwesomeIcon
           icon={faChevronRight}

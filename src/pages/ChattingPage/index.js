@@ -24,6 +24,8 @@ import {
   setNotifChat,
 } from "~/slices/navSlice";
 import request from "~/src/utils/request";
+import EStyleSheet from "react-native-extended-stylesheet";
+import Loading from "~/src/components/Loading";
 
 export default () => {
   const scrollViewRef = useRef(null);
@@ -36,13 +38,17 @@ export default () => {
   const inforDriver = useSelector(selectInforDriver);
   const tripDetails = useSelector(selectTripDetails);
 
+  const [isGetMsg, setIsGetMsg] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const formatTime = dateString => {
     const date = new Date(dateString);
     const hours = date.getHours();
     const minutes = date.getMinutes();
 
-    const formattedTime = `${hours}:${minutes}`;
-    return formattedTime;
+    return `${hours > 9 ? hours : "0" + hours}:${
+      minutes > 9 ? minutes : "0" + minutes
+    }`;
   };
 
   const updateInputText = text => {
@@ -71,32 +77,50 @@ export default () => {
 
   useEffect(() => {
     try {
-      socketServcies.on(
-        `message_${tripDetails.customer}_${inforDriver._id}`,
-        msg => {
-          // console.log(chatBuffers);
-          // const chatArr = [...chatBuffers];
-          // console.log(chatArr);
-          setChatBuffers(chatBuffers => [...chatBuffers, msg.content]);
-          // scrollViewRef.current.scrollToEnd({ animated: true });
-        }
-      );
+      socketServcies.initializeSocket("chatting");
     } catch (error) {
       console.log(error);
     }
   }, []);
 
   useEffect(() => {
+    setIsGetMsg(true);
+    console.log(`message_${tripDetails.customer}_${inforDriver._id}`);
+    try {
+      socketServcies.on(
+        `message_${tripDetails.customer}_${inforDriver._id}`,
+        msg => {
+          console.log(msg.content);
+          setChatBuffers(chatBuffers => [...chatBuffers, msg.content]);
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsGetMsg(false);
+    }
+  }, []);
+
+  useEffect(() => {
     const headers = { Authorization: "Bearer " + inforDriver.token };
-    request
-      .get(`get-messages-customer/${tripDetails.customer}`, { headers })
-      .then(response => {
-        // console.log(response.data);
-        setChatBuffers(response.data);
-      })
-      .catch(err => {
-        console.log(err);
-      });
+    if (isGetMsg) return;
+    (async () => {
+      setIsLoading(true);
+      await request
+        .get(`get-messages-customer/${tripDetails.customer}`, {
+          headers: headers,
+        })
+        .then(response => {
+          setChatBuffers(response.data);
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(function () {
+          setIsLoading(false);
+          scrollViewRef.current.scrollToEnd({ animated: true });
+        });
+    })();
   }, []);
 
   useEffect(() => {
@@ -105,6 +129,7 @@ export default () => {
 
   return (
     <View style={styles.container}>
+      <Loading loading={isLoading} />
       <View style={styles.heading_container}>
         <View style={styles.heading_left}>
           <TouchableOpacity
@@ -172,17 +197,17 @@ export default () => {
   );
 };
 
-const styles = StyleSheet.create({
+const styles = EStyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
   },
   heading_container: {
     backgroundColor: colors.primary_300,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 15,
+    // paddingTop: "3rem",
+    padding: "1rem",
     shadowColor: "black",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
@@ -194,46 +219,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   heading_left_infor: {
-    marginLeft: 20,
+    marginLeft: "1rem",
     flexDirection: "row",
     alignItems: "center",
   },
-  infor_image: { height: 40, width: 40, borderRadius: 30 },
+  infor_image: {
+    height: 40,
+    width: 40,
+    borderRadius: 100,
+    resizeMode: "cover",
+  },
   infor_text: {
-    fontSize: 18,
-    color: text_col.color_800,
-    marginLeft: 15,
+    fontSize: "1.2rem",
+    color: "white",
+    fontWeight: "bold",
+    marginLeft: "1rem",
   },
   mess_container: {
     backgroundColor: "white",
-    paddingHorizontal: 20,
-    marginTop: 5,
+    padding: "1rem",
   },
   mess_receive: {
     width: "auto",
-    maxWidth: 320,
+    maxWidth: "18rem",
     padding: 10,
-    marginBottom: 15,
+    marginBottom: 20,
     backgroundColor: colors.primary_50,
     borderRadius: 10,
     alignSelf: "flex-start",
-    marginBottom: 10,
   },
   mess_send: {
     width: "auto",
-    maxWidth: 320,
+    maxWidth: "18rem",
     padding: 10,
+    marginBottom: 20,
     backgroundColor: colors.primary_100,
     borderRadius: 10,
     alignSelf: "flex-end",
-    marginBottom: 10,
   },
   mess_txt: {
-    fontSize: 16,
+    fontSize: "1rem",
     color: text_col.color_800,
   },
   mess_time: {
-    fontSize: 10,
+    fontSize: "0.75rem",
     color: text_col.color_500,
     alignSelf: "flex-end",
   },
@@ -241,23 +270,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
+    padding: "1rem",
     backgroundColor: "white",
-    shadowColor: "black",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 5,
+    borderTopWidth: 0.5,
+    borderColor: text_col.color_200,
   },
   chat_input: {
-    width: 330,
-    maxWidth: 330,
-    paddingTop: 10,
-    paddingBottom: 10,
+    flex: 1,
+    paddingVertical: 10,
     paddingLeft: 15,
-    paddingRight: 15,
-    fontSize: 16,
-    borderRadius: 30,
-    backgroundColor: text_col.color_100,
+    paddingRight: 40,
+    fontSize: "1rem",
+    borderRadius: 100,
+    backgroundColor: "#fafafa",
+    borderWidth: 1,
+    borderColor: text_col.color_300,
+    marginRight: 15,
+  },
+  chat_input_container: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loading: {
+    position: "absolute",
+    right: 30,
   },
 });

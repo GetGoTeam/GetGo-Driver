@@ -35,14 +35,35 @@ const ReceiveTrip = () => {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const formatCurrencyVND = numberString => {
+    const integerNumber = parseInt(numberString);
+    if (isNaN(integerNumber)) {
+      return "Invalid number";
+    }
+
+    // Định dạng số nguyên thành tiền VND
+    const formattedNumber = integerNumber.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+
+    return formattedNumber;
+  };
+
   const handleAcceptTrip = async () => {
     setIsLoading(true);
+    let dataSend = { ...tripDetails };
+    dataSend.status = "Picking Up";
     await request
-      .post("accept", tripDetails, {
-        Headers: {
-          Authorization: "Bearer " + inforDriver.token,
-        },
-      })
+      .post(
+        "accept",
+        { ...dataSend, driver: inforDriver._id },
+        {
+          Headers: {
+            Authorization: "Bearer " + inforDriver.token,
+          },
+        }
+      )
       .then(res => {
         console.log(res.data);
         dispatch(
@@ -106,7 +127,6 @@ const ReceiveTrip = () => {
 
   return (
     <View style={styles.container}>
-      <Loading loading={isLoading} />
       <View style={styles.heading}>
         <View style={styles.heading_title}>
           <View>
@@ -127,7 +147,12 @@ const ReceiveTrip = () => {
       <View style={styles.payment}>
         <View>
           <Text style={styles.payment_text1}>VNĐ</Text>
-          <Text style={styles.payment_text2}>50k ~ 60k</Text>
+          <Text style={styles.payment_text2}>
+            {formatCurrencyVND(
+              (tripDetails.price - tripDetails.surcharge) * 0.7 +
+                tripDetails.surcharge
+            )}
+          </Text>
         </View>
         <View>
           <Text style={styles.payment_text3}>Thanh toán</Text>
@@ -166,31 +191,33 @@ const ReceiveTrip = () => {
             </View>
           </View>
         </View>
-        <View style={styles.btn}>
-          <View style={styles.btn_block}>
-            <TouchableOpacity
-              onPress={() => {
-                clearInterval(intervalRef.current);
-                navigation.navigate("HomePage");
-              }}
-              style={styles.btn_cancel}
-            >
-              <Text style={styles.btn_text1}>Hủy</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleAcceptTrip}>
-              <View style={styles.btn_accept}>
-                <Text style={styles.btn_text2}>Nhận Đơn</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+      </View>
+      <View style={styles.btn}>
+        <View style={styles.btn_block}>
+          <TouchableOpacity
+            onPress={() => {
+              clearInterval(intervalRef.current);
+              navigation.navigate("HomePage");
+            }}
+            style={styles.btn_cancel}
+          >
+            <Text style={styles.btn_text1}>Hủy</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleAcceptTrip}>
+            <View style={styles.btn_accept}>
+              <Text style={styles.btn_text2}>Nhận Đơn</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
+      <Loading loading={isLoading} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    position: "relative",
     flex: 1,
     backgroundColor: "white",
   },
@@ -287,7 +314,6 @@ const styles = StyleSheet.create({
   body_infor: {
     flexDirection: "row",
     marginTop: 30,
-    height: 370,
   },
   infor_line: {
     alignItems: "center",
@@ -321,12 +347,14 @@ const styles = StyleSheet.create({
     color: "#818181",
   },
   btn: {
+    position: "absolute",
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
+    bottom: 50,
   },
   btn_block: {
-    width: 300,
+    width: "80%",
     flexDirection: "row",
     justifyContent: "space-between",
   },

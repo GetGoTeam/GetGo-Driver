@@ -28,6 +28,21 @@ const NotificationPage = () => {
   const hanldeBackToPage = () => {
     navigation.navigate(tripDetails.path);
   };
+
+  const formatCurrencyVND = numberString => {
+    const integerNumber = parseInt(numberString);
+    if (isNaN(integerNumber)) {
+      return "Invalid number";
+    }
+
+    // Định dạng số nguyên thành tiền VND
+    const formattedNumber = integerNumber.toLocaleString("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    });
+
+    return formattedNumber;
+  };
   return (
     <View style={styles.container}>
       <View style={styles.heading}>
@@ -51,12 +66,17 @@ const NotificationPage = () => {
         <View style={styles.payment}>
           <View>
             <Text style={styles.payment_text1}>VNĐ</Text>
-            <Text style={styles.payment_text2}>50 ~ 60k</Text>
+            <Text style={styles.payment_text2}>
+              {formatCurrencyVND(
+                (tripDetails.price - tripDetails.surcharge) * 0.7 +
+                  tripDetails.surcharge
+              )}
+            </Text>
           </View>
           <View>
             <Text style={styles.payment_text3}>Thanh toán</Text>
             <View style={styles.payment_type}>
-              <Text style={styles.payment_text4}>Tien Mat</Text>
+              <Text style={styles.payment_text4}>Tiền mặt</Text>
             </View>
           </View>
         </View>
