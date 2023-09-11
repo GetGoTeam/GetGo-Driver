@@ -159,7 +159,7 @@ export default () => {
       <View style={styles.chat_container}>
         <TextInput style={styles.chat_input} placeholder="Nhắn tin" value={textInput} onChangeText={updateInputText} />
 
-        {textInput === "" ? (
+        {textInput === "" || sending ? (
           <FontAwesomeIcon icon={faPaperPlane} size={24} color={text_col.color_300} />
         ) : (
           <TouchableOpacity onPress={handleSendMessage}>
