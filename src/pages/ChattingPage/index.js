@@ -1,28 +1,12 @@
-import {
-  faArrowLeft,
-  faPaperPlane,
-  faPhone,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faPaperPlane, faPhone } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import React, { useEffect, useState, useRef } from "react";
-import {
-  StyleSheet,
-  View,
-  Image,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-} from "react-native";
+import { StyleSheet, View, Image, Text, ScrollView, TextInput, TouchableOpacity } from "react-native";
 import { colors, text_col } from "../../utils/colors";
 import { useNavigation } from "@react-navigation/native";
 import socketServcies from "~/src/utils/websocketContext";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  selectInforDriver,
-  selectTripDetails,
-  setNotifChat,
-} from "~/slices/navSlice";
+import { selectInforDriver, selectTripDetails, setNotifChat } from "~/slices/navSlice";
 import request from "~/src/utils/request";
 import EStyleSheet from "react-native-extended-stylesheet";
 import Loading from "~/src/components/Loading";
@@ -39,25 +23,25 @@ export default () => {
   const tripDetails = useSelector(selectTripDetails);
 
   const [isGetMsg, setIsGetMsg] = useState(false);
+  const [sending, setSending] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [firstRender, setFirstRender] = useState(true);
 
-  const formatTime = dateString => {
+  const formatTime = (dateString) => {
     const date = new Date(dateString);
     const hours = date.getHours();
     const minutes = date.getMinutes();
 
-    return `${hours > 9 ? hours : "0" + hours}:${
-      minutes > 9 ? minutes : "0" + minutes
-    }`;
+    return `${hours > 9 ? hours : "0" + hours}:${minutes > 9 ? minutes : "0" + minutes}`;
   };
 
-  const updateInputText = text => {
+  const updateInputText = (text) => {
     setTextInput(text);
   };
 
   const handleSendMessage = () => {
     setTextInput("");
-
+    setSending(true);
     const dataSend = {
       customer_receive: tripDetails.customer,
       content: textInput,
@@ -66,34 +50,43 @@ export default () => {
     const headers = { Authorization: "Bearer " + inforDriver.token };
     request
       .post("create-message", dataSend, { headers })
-      .then(response => {
+      .then((response) => {
         // console.log(response.data);
         // scrollViewRef.current.scrollToEnd({ animated: true });
+        setChatBuffers((chatBuffers) => [...chatBuffers, response.data]);
+        console.log("sent msg");
       })
-      .catch(error => {
+      .catch((error) => {
         console.log(error);
+      })
+      .finally(function () {
+        setSending(false);
       });
   };
 
   useEffect(() => {
+    if (!firstRender) return;
     try {
       socketServcies.initializeSocket("chatting");
+      console.log("init socket msg");
     } catch (error) {
       console.log(error);
+    } finally {
+      setFirstRender(false);
     }
   }, []);
 
   useEffect(() => {
+    if (sending) return;
     setIsGetMsg(true);
     console.log(`message_${tripDetails.customer}_${inforDriver._id}`);
     try {
-      socketServcies.on(
-        `message_${tripDetails.customer}_${inforDriver._id}`,
-        msg => {
-          console.log(msg.content);
-          setChatBuffers(chatBuffers => [...chatBuffers, msg.content]);
+      socketServcies.on(`message_${tripDetails.customer}_${inforDriver._id}`, (msg) => {
+        if (msg.content.driver_receive) {
+          console.log("received msg");
+          setChatBuffers((chatBuffers) => [...chatBuffers, msg.content]);
         }
-      );
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -110,10 +103,11 @@ export default () => {
         .get(`get-messages-customer/${tripDetails.customer}`, {
           headers: headers,
         })
-        .then(response => {
+        .then((response) => {
           setChatBuffers(response.data);
+          console.log("loaded msg");
         })
-        .catch(err => {
+        .catch((err) => {
           console.log(err);
         })
         .finally(function () {
@@ -141,10 +135,7 @@ export default () => {
             <FontAwesomeIcon icon={faArrowLeft} size={28} color="white" />
           </TouchableOpacity>
           <View style={styles.heading_left_infor}>
-            <Image
-              style={styles.infor_image}
-              source={require("../../../assets/portrait.png")}
-            />
+            <Image style={styles.infor_image} source={require("../../../assets/portrait.png")} />
             <Text style={styles.infor_text}>Bảo Long</Text>
           </View>
         </View>
@@ -155,41 +146,24 @@ export default () => {
           return value.driver_receive !== inforDriver.id ? (
             <View key={index} style={styles.mess_receive}>
               <Text style={styles.mess_txt}>{value.content}</Text>
-              <Text style={styles.mess_time}>
-                {formatTime(value.createdAt)}
-              </Text>
+              <Text style={styles.mess_time}>{formatTime(value.createdAt)}</Text>
             </View>
           ) : (
             <View key={index} style={styles.mess_send}>
               <Text style={styles.mess_txt}>{value.content}</Text>
-              <Text style={styles.mess_time}>
-                {formatTime(value.createdAt)}
-              </Text>
+              <Text style={styles.mess_time}>{formatTime(value.createdAt)}</Text>
             </View>
           );
         })}
       </ScrollView>
       <View style={styles.chat_container}>
-        <TextInput
-          style={styles.chat_input}
-          placeholder="Nhắn tin"
-          value={textInput}
-          onChangeText={updateInputText}
-        />
+        <TextInput style={styles.chat_input} placeholder="Nhắn tin" value={textInput} onChangeText={updateInputText} />
 
         {textInput === "" ? (
-          <FontAwesomeIcon
-            icon={faPaperPlane}
-            size={24}
-            color={text_col.color_300}
-          />
+          <FontAwesomeIcon icon={faPaperPlane} size={24} color={text_col.color_300} />
         ) : (
           <TouchableOpacity onPress={handleSendMessage}>
-            <FontAwesomeIcon
-              icon={faPaperPlane}
-              size={24}
-              color={colors.primary_300}
-            />
+            <FontAwesomeIcon icon={faPaperPlane} size={24} color={colors.primary_300} />
           </TouchableOpacity>
         )}
       </View>
