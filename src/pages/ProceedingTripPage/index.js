@@ -41,7 +41,7 @@ const ProceedingTripPage = () => {
   const [statusHeader, setStatusHeader] = useState(false);
   const statusTakeCus = ["Đón khách", "Khách xuống xe", "Hoàn thành đơn"];
 
-  const handleOrderStep = () => {
+  const handleOrderStep = async () => {
     if (stepTakeCus === 0) {
       setIsLoading(true);
       dispatch(
@@ -50,36 +50,36 @@ const ProceedingTripPage = () => {
           longitude: tripDetails.long_destination,
         })
       );
-      async () =>
-        await request
-          .patch("update-trip-status", {
-            id: tripDetails._id,
-            status: "Arriving",
-          })
-          .then(res => {
-            console.log(res.data);
-          })
-          .catch(err => console.log(err))
-          .finally(() => {
-            setIsLoading(false);
-          })();
+
+      await request
+        .patch("update-trip-status", {
+          id: tripDetails._id,
+          status: "Arriving",
+        })
+        .then(res => {
+          console.log(res.data);
+        })
+        .catch(err => console.log(err))
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
 
     if (stepTakeCus === 1) {
       setIsLoading(true);
-      async () =>
-        await request
-          .patch("update-trip-status", {
-            id: tripDetails._id,
-            status: "Arrived",
-          })
-          .then(res => {
-            console.log(res.data);
-          })
-          .catch(err => console.log(err))
-          .finally(() => {
-            setIsLoading(false);
-          })();
+
+      await request
+        .patch("update-trip-status", {
+          id: tripDetails._id,
+          status: "Arrived",
+        })
+        .then(res => {
+          console.log(res.data);
+        })
+        .catch(err => console.log(err))
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
 
     if (stepTakeCus === 2) {
